@@ -183,22 +183,55 @@ export function runDemoAgentPipeline(pa: Pick<PARequest, 'pa_id' | 'patient_id' 
   const baseTime = Date.now();
 
   // Step 1: Clinical Data Gathering
-  executionLog.push({ step: 'clinical_data_gathering', status: 'completed', agent: 'ClinicalDataGatherer', result_summary: 'ES|QL patient profile query executed', timestamp: new Date(baseTime).toISOString() });
   const clinicalData = generateClinicalData(pa.patient_id, pa.procedure_code, pa.diagnosis_codes);
-  executionLog.push({ step: 'clinical_data_gathering', status: 'completed', agent: 'ClinicalDataGatherer', result_summary: `Found ${clinicalData.conditions.length} conditions, ${clinicalData.medications.length} medications, ${clinicalData.observations.length} observations`, timestamp: new Date(baseTime + 1200).toISOString() });
+  executionLog.push({
+    step: 'clinical_data_gathering',
+    status: 'completed',
+    agent: 'ClinicalDataGatherer',
+    result_summary: `Found ${clinicalData.conditions.length} conditions, ${clinicalData.medications.length} medications, ${clinicalData.observations.length} observations`,
+    timestamp: new Date(baseTime + 1200).toISOString(),
+    esql_queries: [
+      `FROM healthsync-conditions\n| WHERE patient_id == "${pa.patient_id}"\n| STATS total_conditions = COUNT(*),\n       active = COUNT_DISTINCT(clinicalStatus)`,
+      `FROM healthsync-medications\n| WHERE patient_id == "${pa.patient_id}"\n| STATS total_medications = COUNT(*)`,
+      `FROM healthsync-observations\n| WHERE patient_id == "${pa.patient_id}"\n| STATS total_observations = COUNT(*)`,
+    ],
+  });
 
   // Step 2: Policy Analysis
-  executionLog.push({ step: 'policy_analysis', status: 'completed', agent: 'PolicyAnalyzer', result_summary: 'ES|QL policy stats retrieved', timestamp: new Date(baseTime + 2000).toISOString() });
   const policyAnalysis = generatePolicyAnalysis(pa.procedure_code, pa.diagnosis_codes, pa.payer);
-  executionLog.push({ step: 'policy_analysis', status: 'completed', agent: 'PolicyAnalyzer', result_summary: `Coverage probability: ${policyAnalysis.coverage_probability}`, timestamp: new Date(baseTime + 4400).toISOString() });
+  executionLog.push({
+    step: 'policy_analysis',
+    status: 'completed',
+    agent: 'PolicyAnalyzer',
+    result_summary: `Matched ${policyAnalysis.matched_policies.length} policies, coverage probability: ${policyAnalysis.coverage_probability}`,
+    timestamp: new Date(baseTime + 4400).toISOString(),
+    esql_queries: [
+      `FROM healthsync-policies\n| WHERE payer == "${pa.payer}"\n| STATS total_policies = COUNT(*),\n       procedure_count = COUNT_DISTINCT(procedure_codes)`,
+    ],
+  });
 
   // Step 3: Documentation Assembly
   const paPacket = generatePAPacket(pa.patient_id, pa.procedure_code, pa.diagnosis_codes, pa.payer, pa.urgency, clinicalData, policyAnalysis);
-  executionLog.push({ step: 'documentation_assembly', status: 'completed', agent: 'DocumentationAssembler', result_summary: 'PA packet generated with medical necessity narrative', timestamp: new Date(baseTime + 7500).toISOString() });
+  executionLog.push({
+    step: 'documentation_assembly',
+    status: 'completed',
+    agent: 'DocumentationAssembler',
+    result_summary: 'PA packet generated with medical necessity narrative',
+    timestamp: new Date(baseTime + 7500).toISOString(),
+  });
 
   // Step 4: Compliance Validation
   const complianceChecks = generateComplianceChecks(pa.urgency, policyAnalysis);
-  executionLog.push({ step: 'compliance_validation', status: 'completed', agent: 'ComplianceValidator', result_summary: `${complianceChecks.checks_passed.length} passed, ${complianceChecks.checks_failed.length} failed, confidence: ${Math.round(complianceChecks.confidence_score * 100)}%`, timestamp: new Date(baseTime + 8300).toISOString() });
+  executionLog.push({
+    step: 'compliance_validation',
+    status: 'completed',
+    agent: 'ComplianceValidator',
+    result_summary: `${complianceChecks.checks_passed.length} passed, ${complianceChecks.checks_failed.length} failed, confidence: ${Math.round(complianceChecks.confidence_score * 100)}%`,
+    timestamp: new Date(baseTime + 8300).toISOString(),
+    esql_queries: [
+      `FROM healthsync-pa-requests\n| WHERE pa_id == "${pa.pa_id}"\n| STATS compliance_score = AVG(compliance_score)`,
+    ],
+  });
 
   const finalStatus = complianceChecks.hitl_required ? 'hitl_required' : 'ready_for_review';
 

@@ -1,8 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
-import { CheckCircle2, Loader2, XCircle, Bot } from 'lucide-react';
+import { CheckCircle2, Loader2, XCircle, Bot, ChevronDown, Database } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import type { ExecutionLogEntry } from '@/lib/types/pa';
 
@@ -22,6 +23,45 @@ const stepDescriptions: Record<string, string> = {
   pa_packet_generation: 'Generating medical necessity narrative and assembling PA documentation',
   compliance_validation: 'Validating CMS timeline compliance, documentation completeness, and calculating confidence score',
 };
+
+function ESQLQueryBlock({ queries }: { queries: string[] }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1.5 text-[11px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
+      >
+        <Database className="w-3 h-3" />
+        <span>{queries.length} ES|QL {queries.length === 1 ? 'Query' : 'Queries'}</span>
+        <ChevronDown className={cn('w-3 h-3 transition-transform', expanded && 'rotate-180')} />
+      </button>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-2 space-y-2">
+              {queries.map((query, i) => (
+                <pre
+                  key={i}
+                  className="text-[11px] leading-relaxed font-mono bg-slate-900 text-emerald-400 rounded-lg px-3 py-2 overflow-x-auto whitespace-pre"
+                >
+                  {query}
+                </pre>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function AgentTimeline({ executionLog }: { executionLog?: ExecutionLogEntry[] }) {
   if (!executionLog || executionLog.length === 0) {
@@ -104,6 +144,9 @@ export default function AgentTimeline({ executionLog }: { executionLog?: Executi
                   <p className="text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-1.5 inline-block mt-1">
                     {step.error}
                   </p>
+                )}
+                {step.esql_queries && step.esql_queries.length > 0 && (
+                  <ESQLQueryBlock queries={step.esql_queries} />
                 )}
                 {step.timestamp && (
                   <span className="text-[10px] text-slate-400 block mt-1">

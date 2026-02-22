@@ -268,6 +268,7 @@ All mutation endpoints use **Zod validation**. Status values are validated again
 - **CMS Compliance** - Timeline validation (72h expedited / 7-day standard deadlines)
 - **Clinical Data Viewer** - Tabbed view of conditions, medications, procedures, observations
 - **Policy Analysis** - Coverage probability scoring, criteria matching, gap identification
+- **ES|QL Query Inspector** - Expandable panels showing the actual ES|QL queries each agent executes
 - **Agent Timeline** - Visual step-by-step execution tracking with timestamps
 - **Responsive Design** - Mobile drawer sidebar, adaptive layouts for phone/tablet/desktop
 - **Security Headers** - HSTS, X-Frame-Options, CSP, Referrer-Policy via `next.config.ts`
