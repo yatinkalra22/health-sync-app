@@ -159,6 +159,7 @@ health-sync-app/
 │   ├── layout.tsx                # Root layout with sidebar
 │   ├── new/page.tsx              # New PA submission form
 │   ├── analytics/page.tsx        # Analytics dashboard with Recharts
+│   ├── audit/page.tsx            # HIPAA audit log viewer
 │   ├── pa/[id]/page.tsx          # PA detail view
 │   ├── error.tsx                 # Error boundary
 │   ├── global-error.tsx          # Global error boundary
@@ -177,6 +178,7 @@ health-sync-app/
 │   ├── pa-details/               # PADetailView, PatientInfo, ClinicalDataPanel,
 │   │                               PolicyAnalysisPanel, PAPacketPanel, AgentTimeline
 │   ├── analytics/                # AnalyticsDashboard (Recharts charts)
+│   ├── audit/                    # AuditLogViewer (HIPAA audit trail)
 │   ├── forms/                    # NewPAForm
 │   └── ui/                       # Sidebar, StatusBadge, ConfidenceRing
 │
@@ -260,6 +262,7 @@ All mutation endpoints use **Zod validation**. Status values are validated again
 - **Multi-Agent Pipeline** - 5 specialized agents process PA requests end-to-end
 - **ES|QL Integration** - Agents use ES|QL for cross-index patient profiling and policy analytics
 - **Analytics Dashboard** - Recharts-powered visualizations: status distribution, payer breakdown, processing timeline, agent performance
+- **Audit Log Viewer** - HIPAA-compliant audit trail UI with PHI access filtering, ES|QL queries per event, and expandable detail rows
 - **Audit Logging** - Every agent action and PHI access logged to Elasticsearch with timestamps, duration, and compliance metadata
 - **Demo Mode** - Works fully without any external services configured
 - **Real-Time Updates** - SSE streaming + SWR polling for live status changes

@@ -22,8 +22,8 @@ const navItems = [
 ];
 
 const secondaryItems = [
-  { href: '/analytics', label: 'Agent Monitor', icon: Zap },
-  { href: '/analytics', label: 'Compliance', icon: Shield },
+  { href: '/agents', label: 'Agent Monitor', icon: Zap },
+  { href: '/audit', label: 'Audit Log', icon: Shield },
 ];
 
 export default function Sidebar() {

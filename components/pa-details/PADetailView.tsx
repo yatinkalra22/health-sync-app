@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Zap, Clock, Building2, Stethoscope, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Zap, Clock, Building2, Stethoscope, FileText, Loader2, CheckCircle2 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
+import { cn } from '@/lib/utils/cn';
 import StatusBadge from '@/components/ui/StatusBadge';
 import ConfidenceRing from '@/components/ui/ConfidenceRing';
 import PatientInfo from './PatientInfo';
@@ -19,10 +20,11 @@ import type { PARequest } from '@/lib/types/pa';
 export default function PADetailView({ pa }: { pa: PARequest }) {
   const router = useRouter();
   const [actionLoading, setActionLoading] = useState<'approve' | 'deny' | 'process' | null>(null);
+  const [processComplete, setProcessComplete] = useState(false);
   const [showDenyInput, setShowDenyInput] = useState(false);
   const [denyReason, setDenyReason] = useState('');
 
-  const handleProcess = async () => {
+  const handleProcess = useCallback(async () => {
     setActionLoading('process');
     try {
       await processPA(pa.pa_id, {
@@ -32,11 +34,15 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
         urgency: pa.urgency,
         payer: pa.payer,
       });
+      setProcessComplete(true);
+      // Brief pause to show success before refreshing
+      await new Promise(resolve => setTimeout(resolve, 800));
       router.refresh();
     } finally {
       setActionLoading(null);
+      setTimeout(() => setProcessComplete(false), 1500);
     }
-  };
+  }, [pa, router]);
 
   const handleApprove = async () => {
     setActionLoading('approve');
@@ -128,14 +134,21 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
               <button
                 onClick={handleProcess}
                 disabled={actionLoading !== null}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl hover:from-blue-700 hover:to-cyan-600 shadow-lg shadow-blue-500/25 transition-all text-sm font-semibold disabled:opacity-50"
+                className={cn(
+                  'inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl shadow-lg transition-all text-sm font-semibold disabled:opacity-50',
+                  processComplete
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-emerald-500/25'
+                    : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-blue-500/25'
+                )}
               >
                 {actionLoading === 'process' ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
+                ) : processComplete ? (
+                  <CheckCircle2 className="w-4 h-4" />
                 ) : (
                   <Zap className="w-4 h-4" />
                 )}
-                Run AI Agents
+                {actionLoading === 'process' ? 'Processing...' : processComplete ? 'Complete!' : 'Run AI Agents'}
               </button>
             )}
 

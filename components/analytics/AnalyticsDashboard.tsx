@@ -1,6 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart,
   Bar,
@@ -22,7 +23,9 @@ import {
   Target,
   Zap,
   Database,
+  ChevronDown,
 } from 'lucide-react';
+import { cn } from '@/lib/utils/cn';
 
 interface AnalyticsData {
   total: number;
@@ -56,6 +59,37 @@ const STATUS_LABELS: Record<string, string> = {
   approved: 'Approved',
   denied: 'Denied',
 };
+
+function ESQLBadge({ query }: { query: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="inline-block">
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
+      >
+        <Database className="w-3 h-3" />
+        ES|QL
+        <ChevronDown className={cn('w-2.5 h-2.5 transition-transform', open && 'rotate-180')} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <pre className="mt-2 text-[11px] leading-relaxed font-mono bg-slate-900 text-emerald-400 rounded-lg px-3 py-2 overflow-x-auto whitespace-pre">
+              {query}
+            </pre>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
   const kpis = [
@@ -142,7 +176,10 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
           transition={{ delay: 0.3 }}
           className="glass-card rounded-xl p-6"
         >
-          <h3 className="text-sm font-semibold text-slate-700 mb-4">PA Status Distribution</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-700">PA Status Distribution</h3>
+            <ESQLBadge query={`FROM healthsync-pa-requests\n| STATS count = COUNT(*) BY status\n| SORT count DESC`} />
+          </div>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={data.status_breakdown}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -172,7 +209,10 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
           transition={{ delay: 0.4 }}
           className="glass-card rounded-xl p-6"
         >
-          <h3 className="text-sm font-semibold text-slate-700 mb-4">Requests by Payer</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-700">Requests by Payer</h3>
+            <ESQLBadge query={`FROM healthsync-pa-requests\n| STATS count = COUNT(*) BY payer\n| SORT count DESC`} />
+          </div>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
@@ -204,7 +244,10 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
           transition={{ delay: 0.5 }}
           className="glass-card rounded-xl p-6"
         >
-          <h3 className="text-sm font-semibold text-slate-700 mb-4">Weekly Processing Volume</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-700">Weekly Processing Volume</h3>
+            <ESQLBadge query={`FROM healthsync-pa-requests\n| WHERE created_at >= NOW() - 7 days\n| EVAL day = DATE_FORMAT(created_at, "EEE")\n| STATS submitted = COUNT(*) BY day`} />
+          </div>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={data.processing_timeline}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -239,7 +282,10 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
           transition={{ delay: 0.6 }}
           className="glass-card rounded-xl p-6"
         >
-          <h3 className="text-sm font-semibold text-slate-700 mb-4">Agent Performance</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-700">Agent Performance</h3>
+            <ESQLBadge query={`FROM healthsync-audit-logs\n| STATS avg_duration = AVG(duration_ms),\n       success_rate = COUNT(status == "completed") / COUNT(*) * 100\n  BY agent`} />
+          </div>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={data.agent_performance} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
