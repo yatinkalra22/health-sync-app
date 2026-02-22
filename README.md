@@ -110,6 +110,21 @@ FHIR_DB_USER=admin
 FHIR_DB_PASSWORD=admin
 ```
 
+**Loading test patient data** (optional):
+
+Use [Synthea](https://github.com/synthetichealth/synthea) to generate synthetic FHIR patient bundles, then load them into the FHIR server and index into Elasticsearch:
+
+```bash
+# 1. Generate synthetic patients (requires Java)
+java -jar synthea-with-dependencies.jar -p 10
+
+# 2. Load bundles into the FHIR server
+npm run load:fhir-data -- ./output/fhir
+
+# 3. Index FHIR data into Elasticsearch (requires ES credentials)
+npm run index:fhir
+```
+
 To stop:
 
 ```bash
@@ -196,6 +211,8 @@ health-sync-app/
 | `npm run setup:es` | Create Elasticsearch indices (requires ES credentials) |
 | `npm run setup:policies` | Seed sample payer policies into Elasticsearch |
 | `npm run health-check` | Check connectivity to Elasticsearch and FHIR server |
+| `npm run load:fhir-data -- <path>` | Load Synthea FHIR bundles into the FHIR server |
+| `npm run index:fhir` | Index FHIR server data into Elasticsearch |
 
 ---
 
