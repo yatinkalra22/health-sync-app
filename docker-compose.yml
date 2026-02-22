@@ -1,0 +1,41 @@
+version: '3.8'
+
+# LOCAL DEVELOPMENT ONLY - Not needed for production/Vercel deployment.
+# The FHIR server is optional; the app works fully without it using Elasticsearch + Anthropic.
+
+services:
+  fhir-server:
+    image: hapiproject/hapi:latest
+    container_name: healthsync-fhir
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://fhir-db:5432/${FHIR_DB_NAME:-hapi}
+      - SPRING_DATASOURCE_USERNAME=${FHIR_DB_USER:-admin}
+      - SPRING_DATASOURCE_PASSWORD=${FHIR_DB_PASSWORD:-admin}
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgres94Dialect
+      - HAPI_FHIR_SERVER_ADDRESS=http://localhost:8080/fhir
+    depends_on:
+      - fhir-db
+    networks:
+      - healthsync-network
+
+  fhir-db:
+    image: postgres:14
+    container_name: healthsync-fhir-db
+    environment:
+      - POSTGRES_DB=${FHIR_DB_NAME:-hapi}
+      - POSTGRES_USER=${FHIR_DB_USER:-admin}
+      - POSTGRES_PASSWORD=${FHIR_DB_PASSWORD:-admin}
+    volumes:
+      - fhir-db-data:/var/lib/postgresql/data
+    networks:
+      - healthsync-network
+
+volumes:
+  fhir-db-data:
+
+networks:
+  healthsync-network:
+    driver: bridge
