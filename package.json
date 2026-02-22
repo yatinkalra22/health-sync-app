@@ -9,7 +9,9 @@
     "lint": "eslint",
     "setup:es": "tsx scripts/setup-elasticsearch.ts",
     "setup:policies": "tsx scripts/create-sample-policies.ts",
-    "health-check": "tsx scripts/health-check.ts"
+    "health-check": "tsx scripts/health-check.ts",
+    "load:fhir-data": "tsx scripts/load-fhir-data.ts",
+    "index:fhir": "tsx scripts/index-fhir-to-elasticsearch.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

@@ -2,6 +2,7 @@ import { BaseAgent } from './BaseAgent';
 import { Client } from '@elastic/elasticsearch';
 import type { SearchRequest } from '@elastic/elasticsearch/lib/api/types';
 import { ES_INDICES } from '@/lib/constants';
+import { esqlQuery } from '@/lib/services/elasticsearch';
 
 interface PolicyContext {
   procedure_code: string;
@@ -33,6 +34,10 @@ export class PolicyAnalyzer extends BaseAgent {
     const { procedure_code, payer, diagnosis_codes } = context;
     this.log('Analyzing policies for:', { procedure_code, payer });
 
+    // ES|QL: Check how many policies exist for this payer before full search
+    const policyStats = await this.getPolicyStatsESQL(payer);
+    this.log('ES|QL policy stats for payer:', policyStats);
+
     const policies = await this.searchPolicies(procedure_code, payer, diagnosis_codes);
 
     if (policies.length === 0) {
@@ -56,6 +61,23 @@ export class PolicyAnalyzer extends BaseAgent {
       coverage_probability: coverageProbability,
       policy_analysis: criteriaAnalysis.analysis,
     };
+  }
+
+  /**
+   * ES|QL query to get policy coverage stats for a payer.
+   */
+  private async getPolicyStatsESQL(payer: string) {
+    try {
+      const results = await esqlQuery(`
+        FROM ${ES_INDICES.POLICIES}
+        | WHERE payer == "${payer}"
+        | STATS total_policies = COUNT(*), procedure_count = COUNT_DISTINCT(procedure_codes)
+      `);
+      return results[0] || { total_policies: 0, procedure_count: 0 };
+    } catch {
+      this.log('ES|QL policy stats unavailable');
+      return null;
+    }
   }
 
   private async searchPolicies(

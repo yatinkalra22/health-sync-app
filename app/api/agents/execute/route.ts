@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { CoordinatorAgent } from '@/lib/agents/CoordinatorAgent';
 import { elasticsearch, updatePARequest } from '@/lib/services/elasticsearch';
+import { updateDemoPARequest } from '@/lib/demo-store';
+import { runDemoAgentPipeline } from '@/lib/agents/demo-agent-runner';
 import { ES_INDICES } from '@/lib/constants';
+import type { PARequest } from '@/lib/types/pa';
 
 const executeSchema = z.object({
   pa_id: z.string().min(1),
@@ -27,31 +30,48 @@ export async function POST(request: NextRequest) {
 
     const { pa_id } = parsed.data;
 
-    // Update status to processing
-    if (elasticsearch) {
-      await elasticsearch.update({
-        index: ES_INDICES.PA_REQUESTS,
-        id: pa_id,
-        doc: { status: 'processing', updated_at: new Date().toISOString() },
-      });
-    }
+    if (!elasticsearch) {
+      // Demo mode: run simulated agents
+      updateDemoPARequest(pa_id, { status: 'processing' });
 
-    // Execute coordinator agent
-    const coordinator = new CoordinatorAgent(elasticsearch);
-    const result = await coordinator.execute(parsed.data);
+      const result = runDemoAgentPipeline(parsed.data);
 
-    // Update PA with results
-    if (elasticsearch) {
-      await updatePARequest(pa_id, {
-        status: result.status,
+      updateDemoPARequest(pa_id, {
+        status: result.final_status as PARequest['status'],
         clinical_data: result.clinical_data,
         policy_analysis: result.policy_analysis,
         pa_packet: result.pa_packet,
         compliance_checks: result.compliance_checks,
         execution_log: result.execution_log,
-        updated_at: new Date().toISOString(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        pa_id,
+        status: result.final_status,
+        execution_log: result.execution_log,
       });
     }
+
+    // Live mode
+    await elasticsearch.update({
+      index: ES_INDICES.PA_REQUESTS,
+      id: pa_id,
+      doc: { status: 'processing', updated_at: new Date().toISOString() },
+    });
+
+    const coordinator = new CoordinatorAgent(elasticsearch);
+    const result = await coordinator.execute(parsed.data);
+
+    await updatePARequest(pa_id, {
+      status: result.status,
+      clinical_data: result.clinical_data,
+      policy_analysis: result.policy_analysis,
+      pa_packet: result.pa_packet,
+      compliance_checks: result.compliance_checks,
+      execution_log: result.execution_log,
+      updated_at: new Date().toISOString(),
+    });
 
     return NextResponse.json({
       success: true,

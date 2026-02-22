@@ -4,6 +4,7 @@ import { PolicyAnalyzer } from './PolicyAnalyzer';
 import { DocumentationAssembler } from './DocumentationAssembler';
 import { ComplianceValidator } from './ComplianceValidator';
 import { Client } from '@elastic/elasticsearch';
+import { writeAuditLog } from '@/lib/services/elasticsearch';
 
 interface PAContext {
   pa_id: string;
@@ -50,11 +51,27 @@ export class CoordinatorAgent extends BaseAgent {
     this.complianceValidator = new ComplianceValidator();
   }
 
+  private async audit(action: string, agent: string, paId: string, patientId: string, details: string, phiAccessed: boolean, durationMs?: number) {
+    writeAuditLog({
+      audit_id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      action,
+      agent,
+      pa_id: paId,
+      patient_id: patientId,
+      details,
+      phi_accessed: phiAccessed,
+      duration_ms: durationMs,
+    });
+  }
+
   async execute(context: PAContext): Promise<PAResult> {
     const { pa_id } = context;
     const executionLog: PAResult['execution_log'] = [];
+    const workflowStart = Date.now();
 
     this.log('Starting PA workflow for:', pa_id);
+    this.audit('workflow_started', 'Coordinator', pa_id, context.patient_id, `PA workflow initiated for procedure ${context.procedure_code}`, false);
 
     try {
       // Step 1: Gather clinical data
@@ -65,10 +82,13 @@ export class CoordinatorAgent extends BaseAgent {
         timestamp: new Date().toISOString(),
       });
 
+      const stepStart = Date.now();
       const clinicalData = await this.clinicalGatherer.execute({
         patient_id: context.patient_id,
         procedure_code: context.procedure_code,
       });
+
+      this.audit('clinical_data_accessed', 'ClinicalDataGatherer', pa_id, context.patient_id, `Retrieved ${clinicalData.conditions.length} conditions, ${clinicalData.medications.length} medications, ${clinicalData.observations.length} observations`, true, Date.now() - stepStart);
 
       executionLog.push({
         step: 'clinical_data_gathering',
@@ -85,12 +105,15 @@ export class CoordinatorAgent extends BaseAgent {
         timestamp: new Date().toISOString(),
       });
 
+      const step2Start = Date.now();
       const policyAnalysis = await this.policyAnalyzer.execute({
         procedure_code: context.procedure_code,
         diagnosis_codes: context.diagnosis_codes,
         payer: context.payer,
         clinical_data: clinicalData,
       });
+
+      this.audit('policy_analyzed', 'PolicyAnalyzer', pa_id, context.patient_id, `Matched ${policyAnalysis.matched_policies.length} policies, coverage probability: ${policyAnalysis.coverage_probability}`, false, Date.now() - step2Start);
 
       executionLog.push({
         step: 'policy_analysis',
@@ -107,6 +130,7 @@ export class CoordinatorAgent extends BaseAgent {
         timestamp: new Date().toISOString(),
       });
 
+      const step3Start = Date.now();
       const paPacket = await this.documentationAssembler.execute({
         patient_id: context.patient_id,
         procedure_code: context.procedure_code,
@@ -116,6 +140,8 @@ export class CoordinatorAgent extends BaseAgent {
         clinical_data: clinicalData,
         policy_analysis: policyAnalysis,
       });
+
+      this.audit('pa_packet_generated', 'DocumentationAssembler', pa_id, context.patient_id, 'PA packet generated with medical necessity narrative', true, Date.now() - step3Start);
 
       executionLog.push({
         step: 'documentation_assembly',
@@ -132,6 +158,7 @@ export class CoordinatorAgent extends BaseAgent {
         timestamp: new Date().toISOString(),
       });
 
+      const step4Start = Date.now();
       const complianceChecks = await this.complianceValidator.execute({
         pa_id,
         urgency: context.urgency,
@@ -140,6 +167,8 @@ export class CoordinatorAgent extends BaseAgent {
         policy_analysis: policyAnalysis,
         pa_packet: paPacket,
       });
+
+      this.audit('compliance_validated', 'ComplianceValidator', pa_id, context.patient_id, `${complianceChecks.checks_passed.length} passed, ${complianceChecks.checks_failed.length} failed, HITL: ${complianceChecks.hitl_required}`, false, Date.now() - step4Start);
 
       executionLog.push({
         step: 'compliance_validation',
@@ -150,6 +179,8 @@ export class CoordinatorAgent extends BaseAgent {
 
       // Determine final status
       const status = complianceChecks.hitl_required ? 'hitl_required' : 'ready_for_review';
+
+      this.audit('workflow_completed', 'Coordinator', pa_id, context.patient_id, `Workflow completed with status: ${status}, confidence: ${Math.round(complianceChecks.confidence_score * 100)}%`, false, Date.now() - workflowStart);
 
       return {
         pa_id,
@@ -163,6 +194,8 @@ export class CoordinatorAgent extends BaseAgent {
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.log('PA workflow failed:', errorMessage);
+
+      this.audit('workflow_failed', 'Coordinator', pa_id, context.patient_id, `Error: ${errorMessage}`, false, Date.now() - workflowStart);
 
       executionLog.push({
         step: 'error',

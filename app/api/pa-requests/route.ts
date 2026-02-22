@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { elasticsearch, searchPARequests, indexPARequest } from '@/lib/services/elasticsearch';
 import { CoordinatorAgent } from '@/lib/agents/CoordinatorAgent';
-import { DEMO_PA_REQUESTS } from '@/lib/demo-data';
+import { getAllDemoPARequests, addDemoPARequest, updateDemoPARequest } from '@/lib/demo-store';
+import { runDemoAgentPipeline } from '@/lib/agents/demo-agent-runner';
 import { PA_STATUSES, API_DEFAULT_PAGE_SIZE, API_MAX_PAGE_SIZE, ES_INDICES } from '@/lib/constants';
+import type { PARequest } from '@/lib/types/pa';
 
 const createPASchema = z.object({
   patient_id: z.string().min(1),
@@ -27,13 +29,9 @@ export async function GET(request: NextRequest) {
       API_MAX_PAGE_SIZE
     );
 
-    // Use demo data when Elasticsearch is not configured
     if (!elasticsearch) {
-      let data = DEMO_PA_REQUESTS;
-      if (status) {
-        data = data.filter(pa => pa.status === status);
-      }
-      return NextResponse.json(data.slice(0, limit));
+      const data = getAllDemoPARequests({ status: status || undefined, limit });
+      return NextResponse.json(data);
     }
 
     const filters: { status?: string; limit: number } = { limit };
@@ -62,7 +60,7 @@ export async function POST(request: NextRequest) {
     const paId = `PA-${crypto.randomUUID().split('-')[0].toUpperCase()}`;
 
     const validated = parsed.data;
-    const paRequest = {
+    const paRequest: PARequest = {
       pa_id: paId,
       patient_id: validated.patient_id,
       procedure_code: validated.procedure_code,
@@ -76,9 +74,25 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
-    await indexPARequest(paRequest);
+    if (!elasticsearch) {
+      // Demo mode: add to in-memory store and run demo agents
+      addDemoPARequest(paRequest);
 
-    // Trigger background processing
+      // Run demo agent pipeline
+      const result = runDemoAgentPipeline(paRequest);
+      updateDemoPARequest(paId, {
+        status: result.final_status as PARequest['status'],
+        clinical_data: result.clinical_data,
+        policy_analysis: result.policy_analysis,
+        pa_packet: result.pa_packet,
+        compliance_checks: result.compliance_checks,
+        execution_log: result.execution_log,
+      });
+
+      return NextResponse.json({ ...paRequest, status: result.final_status }, { status: 201 });
+    }
+
+    await indexPARequest(paRequest);
     processPARequest(paId, paRequest).catch(console.error);
 
     return NextResponse.json(paRequest, { status: 201 });
@@ -88,7 +102,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function processPARequest(paId: string, paRequest: Record<string, unknown>) {
+async function processPARequest(paId: string, paRequest: PARequest) {
   try {
     if (elasticsearch) {
       await elasticsearch.update({
@@ -101,11 +115,11 @@ async function processPARequest(paId: string, paRequest: Record<string, unknown>
     const coordinator = new CoordinatorAgent(elasticsearch);
     const result = await coordinator.execute({
       pa_id: paId,
-      patient_id: paRequest.patient_id as string,
-      procedure_code: paRequest.procedure_code as string,
-      diagnosis_codes: paRequest.diagnosis_codes as string[],
-      urgency: paRequest.urgency as string,
-      payer: paRequest.payer as string,
+      patient_id: paRequest.patient_id,
+      procedure_code: paRequest.procedure_code,
+      diagnosis_codes: paRequest.diagnosis_codes,
+      urgency: paRequest.urgency,
+      payer: paRequest.payer,
     });
 
     if (elasticsearch) {

@@ -2,6 +2,7 @@ import { BaseAgent } from './BaseAgent';
 import { Client } from '@elastic/elasticsearch';
 import type { SearchRequest } from '@elastic/elasticsearch/lib/api/types';
 import { ES_INDICES } from '@/lib/constants';
+import { esqlQuery } from '@/lib/services/elasticsearch';
 
 interface ClinicalContext {
   patient_id: string;
@@ -34,6 +35,10 @@ export class ClinicalDataGatherer extends BaseAgent {
     const { patient_id } = context;
     this.log('Gathering clinical data for patient:', patient_id);
 
+    // Use ES|QL to get a cross-index patient profile summary
+    const esqlProfile = await this.getPatientProfileESQL(patient_id);
+    this.log('ES|QL patient profile:', esqlProfile);
+
     const demographics = await this.getPatientDemographics(patient_id);
     const conditions = await this.getPatientConditions(patient_id);
     const medications = await this.getPatientMedications(patient_id);
@@ -62,6 +67,41 @@ export class ClinicalDataGatherer extends BaseAgent {
       clinical_summary: clinicalSummary,
       complexity_score: complexityScore,
     };
+  }
+
+  /**
+   * ES|QL query to get a cross-index patient clinical profile summary.
+   * Uses ES|QL STATS aggregation to count resources across indices.
+   */
+  private async getPatientProfileESQL(patientId: string) {
+    try {
+      const [conditionStats, medicationStats, observationStats] = await Promise.all([
+        esqlQuery(`
+          FROM ${ES_INDICES.CONDITIONS}
+          | WHERE patient_id == "${patientId}"
+          | STATS total_conditions = COUNT(*), active_conditions = COUNT_DISTINCT(clinicalStatus)
+        `),
+        esqlQuery(`
+          FROM ${ES_INDICES.MEDICATIONS}
+          | WHERE patient_id == "${patientId}"
+          | STATS total_medications = COUNT(*)
+        `),
+        esqlQuery(`
+          FROM ${ES_INDICES.OBSERVATIONS}
+          | WHERE patient_id == "${patientId}"
+          | STATS total_observations = COUNT(*)
+        `),
+      ]);
+
+      return {
+        conditions: conditionStats[0] || {},
+        medications: medicationStats[0] || {},
+        observations: observationStats[0] || {},
+      };
+    } catch {
+      this.log('ES|QL profile query unavailable, using standard search');
+      return null;
+    }
   }
 
   private async searchIndex(index: string, patientId: string, sortField?: string, size = 50) {

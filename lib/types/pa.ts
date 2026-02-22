@@ -172,4 +172,5 @@ export interface ExecutionLogEntry {
   result_summary?: string;
   error?: string;
   timestamp?: string;
+  esql_queries?: string[];
 }

@@ -17,6 +17,7 @@ export const ES_INDICES = {
   OBSERVATIONS: `${INDEX_PREFIX}-observations`,
   PA_REQUESTS: `${INDEX_PREFIX}-pa-requests`,
   POLICIES: `${INDEX_PREFIX}-policies`,
+  AUDIT_LOGS: `${INDEX_PREFIX}-audit-logs`,
 } as const;
 
 // ---------------------

@@ -95,10 +95,18 @@ export const DEMO_PA_REQUESTS: PARequest[] = [
       timeline_compliant: true,
     },
     execution_log: [
-      { step: 'clinical_data_gathering', status: 'completed', agent: 'ClinicalDataGatherer', result_summary: 'Found 4 conditions, 3 medications', timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString() },
-      { step: 'policy_analysis', status: 'completed', agent: 'PolicyAnalyzer', result_summary: 'Coverage probability: 0.85', timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
+      { step: 'clinical_data_gathering', status: 'completed', agent: 'ClinicalDataGatherer', result_summary: 'Found 4 conditions, 3 medications', timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(), esql_queries: [
+        'FROM healthsync-conditions\n| WHERE patient_id == "Patient-1042"\n| STATS total_conditions = COUNT(*),\n       active = COUNT_DISTINCT(clinicalStatus)',
+        'FROM healthsync-medications\n| WHERE patient_id == "Patient-1042"\n| STATS total_medications = COUNT(*)',
+        'FROM healthsync-observations\n| WHERE patient_id == "Patient-1042"\n| STATS total_observations = COUNT(*)',
+      ] },
+      { step: 'policy_analysis', status: 'completed', agent: 'PolicyAnalyzer', result_summary: 'Coverage probability: 0.85', timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(), esql_queries: [
+        'FROM healthsync-policies\n| WHERE payer == "Medicare"\n| STATS total_policies = COUNT(*),\n       procedure_count = COUNT_DISTINCT(procedure_codes)',
+      ] },
       { step: 'documentation_assembly', status: 'completed', agent: 'DocumentationAssembler', result_summary: 'PA packet generated with medical necessity narrative', timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString() },
-      { step: 'compliance_validation', status: 'completed', agent: 'ComplianceValidator', result_summary: '5 passed, 0 failed, confidence: 85%', timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString() },
+      { step: 'compliance_validation', status: 'completed', agent: 'ComplianceValidator', result_summary: '5 passed, 0 failed, confidence: 85%', timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), esql_queries: [
+        'FROM healthsync-pa-requests\n| WHERE pa_id == "PA-7K3M9X2B"\n| STATS compliance_score = AVG(compliance_score)',
+      ] },
     ],
   },
   {
@@ -114,7 +122,10 @@ export const DEMO_PA_REQUESTS: PARequest[] = [
     clinician_id: 'DR-7832',
     notes: 'Acute meniscal tear with locking - needs expedited review',
     execution_log: [
-      { step: 'clinical_data_gathering', status: 'completed', agent: 'ClinicalDataGatherer', result_summary: 'Found 2 conditions, 1 medication', timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString() },
+      { step: 'clinical_data_gathering', status: 'completed', agent: 'ClinicalDataGatherer', result_summary: 'Found 2 conditions, 1 medication', timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), esql_queries: [
+        'FROM healthsync-conditions\n| WHERE patient_id == "Patient-2087"\n| STATS total_conditions = COUNT(*)',
+        'FROM healthsync-medications\n| WHERE patient_id == "Patient-2087"\n| STATS total_medications = COUNT(*)',
+      ] },
       { step: 'policy_analysis', status: 'started', agent: 'PolicyAnalyzer', timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString() },
     ],
   },

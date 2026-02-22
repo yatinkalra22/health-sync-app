@@ -1,6 +1,6 @@
 import PADashboard from '@/components/dashboard/PADashboard';
 import { elasticsearch, searchPARequests } from '@/lib/services/elasticsearch';
-import { DEMO_PA_REQUESTS } from '@/lib/demo-data';
+import { getAllDemoPARequests } from '@/lib/demo-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,8 +9,12 @@ export default async function HomePage() {
 
   if (elasticsearch) {
     paRequests = await searchPARequests({});
+    // Fall back to demo data if ES is connected but indices are empty/missing
+    if (paRequests.length === 0) {
+      paRequests = getAllDemoPARequests();
+    }
   } else {
-    paRequests = DEMO_PA_REQUESTS;
+    paRequests = getAllDemoPARequests();
   }
 
   return <PADashboard initialData={paRequests} />;

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { elasticsearch, getPARequest } from '@/lib/services/elasticsearch';
-import { DEMO_PA_REQUESTS } from '@/lib/demo-data';
+import { getDemoPARequest } from '@/lib/demo-store';
 import PADetailView from '@/components/pa-details/PADetailView';
 import type { PARequest } from '@/lib/types/pa';
 
@@ -21,7 +21,7 @@ export default async function PADetailPage({
       pa = result as PARequest;
     }
   } else {
-    pa = DEMO_PA_REQUESTS.find(p => p.pa_id === id) || null;
+    pa = getDemoPARequest(id);
   }
 
   if (!pa) {

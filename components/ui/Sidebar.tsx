@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   FilePlus,
   Activity,
-  Settings,
   Shield,
   Zap,
   Heart,
@@ -19,13 +18,12 @@ import {
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/new', label: 'New PA Request', icon: FilePlus },
+  { href: '/analytics', label: 'Analytics', icon: Activity },
 ];
 
 const secondaryItems = [
-  { href: '#', label: 'Agent Monitor', icon: Zap },
-  { href: '#', label: 'Analytics', icon: Activity },
-  { href: '#', label: 'Compliance', icon: Shield },
-  { href: '#', label: 'Settings', icon: Settings },
+  { href: '/agents', label: 'Agent Monitor', icon: Zap },
+  { href: '/audit', label: 'Audit Log', icon: Shield },
 ];
 
 export default function Sidebar() {
@@ -110,16 +108,24 @@ export default function Sidebar() {
           <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold px-3 mb-3">
             System
           </p>
-          {secondaryItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-all duration-200"
-            >
-              <item.icon className="w-[18px] h-[18px]" />
-              {item.label}
-            </Link>
-          ))}
+          {secondaryItems.map((item) => {
+            const isSecActive = pathname === item.href;
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                  isSecActive
+                    ? 'bg-blue-500/15 text-blue-400 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
+                )}
+              >
+                <item.icon className="w-[18px] h-[18px]" />
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
       </nav>
 
@@ -131,7 +137,7 @@ export default function Sidebar() {
             <span className="text-xs font-medium text-slate-300">System Active</span>
           </div>
           <div className="flex justify-between text-[10px] text-slate-500">
-            <span>Agents: 3 ready</span>
+            <span>Agents: 5 ready</span>
             <span>Demo Mode</span>
           </div>
         </div>

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Zap, Clock, Building2, Stethoscope, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Zap, Clock, Building2, Stethoscope, FileText, Loader2, CheckCircle2 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
+import { cn } from '@/lib/utils/cn';
 import StatusBadge from '@/components/ui/StatusBadge';
 import ConfidenceRing from '@/components/ui/ConfidenceRing';
 import PatientInfo from './PatientInfo';
@@ -13,14 +14,51 @@ import ClinicalDataPanel from './ClinicalDataPanel';
 import PolicyAnalysisPanel from './PolicyAnalysisPanel';
 import PAPacketPanel from './PAPacketPanel';
 import AgentTimeline from './AgentTimeline';
-import { approvePARequest, denyPARequest } from '@/actions/pa-actions';
-import type { PARequest } from '@/lib/types/pa';
+import { approvePARequest, denyPARequest, processPA } from '@/actions/pa-actions';
+import type { PARequest, ExecutionLogEntry } from '@/lib/types/pa';
 
 export default function PADetailView({ pa }: { pa: PARequest }) {
   const router = useRouter();
-  const [actionLoading, setActionLoading] = useState<'approve' | 'deny' | null>(null);
+  const [actionLoading, setActionLoading] = useState<'approve' | 'deny' | 'process' | null>(null);
+  const [processComplete, setProcessComplete] = useState(false);
   const [showDenyInput, setShowDenyInput] = useState(false);
   const [denyReason, setDenyReason] = useState('');
+  const [streamingLog, setStreamingLog] = useState<ExecutionLogEntry[] | null>(null);
+
+  const handleStreamingComplete = useCallback(() => {
+    setStreamingLog(null);
+    setActionLoading(null);
+    setProcessComplete(true);
+    router.refresh();
+    setTimeout(() => setProcessComplete(false), 1500);
+  }, [router]);
+
+  const handleProcess = useCallback(async () => {
+    setActionLoading('process');
+    try {
+      const result = await processPA(pa.pa_id, {
+        patient_id: pa.patient_id,
+        procedure_code: pa.procedure_code,
+        diagnosis_codes: pa.diagnosis_codes,
+        urgency: pa.urgency,
+        payer: pa.payer,
+      });
+
+      // If we got execution_log back, enter streaming animation mode
+      if (result.execution_log && result.execution_log.length > 0) {
+        setStreamingLog(result.execution_log);
+        // actionLoading stays 'process' — animation will clear it via handleStreamingComplete
+      } else {
+        setProcessComplete(true);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        router.refresh();
+        setActionLoading(null);
+        setTimeout(() => setProcessComplete(false), 1500);
+      }
+    } catch {
+      setActionLoading(null);
+    }
+  }, [pa, router]);
 
   const handleApprove = async () => {
     setActionLoading('approve');
@@ -106,6 +144,28 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
                 <ConfidenceRing score={pa.compliance_checks.confidence_score} size={56} />
                 <p className="text-[10px] text-slate-400 mt-1 font-medium">Confidence</p>
               </div>
+            )}
+
+            {(pa.status === 'submitted') && (
+              <button
+                onClick={handleProcess}
+                disabled={actionLoading !== null}
+                className={cn(
+                  'inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl shadow-lg transition-all text-sm font-semibold disabled:opacity-50',
+                  processComplete
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-emerald-500/25'
+                    : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-blue-500/25'
+                )}
+              >
+                {actionLoading === 'process' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : processComplete ? (
+                  <CheckCircle2 className="w-4 h-4" />
+                ) : (
+                  <Zap className="w-4 h-4" />
+                )}
+                {actionLoading === 'process' ? 'Processing...' : processComplete ? 'Complete!' : 'Run AI Agents'}
+              </button>
             )}
 
             {(pa.status === 'hitl_required' || pa.status === 'ready_for_review') && (
@@ -214,7 +274,11 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
 
         {/* Right column - Agent timeline */}
         <div className="space-y-6">
-          <AgentTimeline executionLog={pa.execution_log} />
+          <AgentTimeline
+            executionLog={streamingLog || pa.execution_log}
+            streaming={streamingLog !== null}
+            onStreamingComplete={handleStreamingComplete}
+          />
 
           {/* Complexity score */}
           {pa.clinical_data?.complexity_score !== undefined && (
