@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getPARequest, elasticsearch, updatePARequest } from '@/lib/services/elasticsearch';
-import { DEMO_PA_REQUESTS } from '@/lib/demo-data';
+import { getDemoPARequest, updateDemoPARequest } from '@/lib/demo-store';
 import { PA_STATUSES } from '@/lib/constants';
 
 const patchPASchema = z.object({
@@ -18,9 +18,8 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // Use demo data when Elasticsearch is not configured
     if (!elasticsearch) {
-      const demoPA = DEMO_PA_REQUESTS.find(pa => pa.pa_id === id);
+      const demoPA = getDemoPARequest(id);
       if (!demoPA) {
         return NextResponse.json({ error: 'PA request not found' }, { status: 404 });
       }
@@ -53,6 +52,12 @@ export async function PATCH(
         { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
+    }
+
+    if (!elasticsearch) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      updateDemoPARequest(id, parsed.data as any);
+      return NextResponse.json({ success: true, pa_id: id });
     }
 
     await updatePARequest(id, {

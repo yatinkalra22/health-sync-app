@@ -13,14 +13,30 @@ import ClinicalDataPanel from './ClinicalDataPanel';
 import PolicyAnalysisPanel from './PolicyAnalysisPanel';
 import PAPacketPanel from './PAPacketPanel';
 import AgentTimeline from './AgentTimeline';
-import { approvePARequest, denyPARequest } from '@/actions/pa-actions';
+import { approvePARequest, denyPARequest, processPA } from '@/actions/pa-actions';
 import type { PARequest } from '@/lib/types/pa';
 
 export default function PADetailView({ pa }: { pa: PARequest }) {
   const router = useRouter();
-  const [actionLoading, setActionLoading] = useState<'approve' | 'deny' | null>(null);
+  const [actionLoading, setActionLoading] = useState<'approve' | 'deny' | 'process' | null>(null);
   const [showDenyInput, setShowDenyInput] = useState(false);
   const [denyReason, setDenyReason] = useState('');
+
+  const handleProcess = async () => {
+    setActionLoading('process');
+    try {
+      await processPA(pa.pa_id, {
+        patient_id: pa.patient_id,
+        procedure_code: pa.procedure_code,
+        diagnosis_codes: pa.diagnosis_codes,
+        urgency: pa.urgency,
+        payer: pa.payer,
+      });
+      router.refresh();
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const handleApprove = async () => {
     setActionLoading('approve');
@@ -106,6 +122,21 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
                 <ConfidenceRing score={pa.compliance_checks.confidence_score} size={56} />
                 <p className="text-[10px] text-slate-400 mt-1 font-medium">Confidence</p>
               </div>
+            )}
+
+            {(pa.status === 'submitted') && (
+              <button
+                onClick={handleProcess}
+                disabled={actionLoading !== null}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl hover:from-blue-700 hover:to-cyan-600 shadow-lg shadow-blue-500/25 transition-all text-sm font-semibold disabled:opacity-50"
+              >
+                {actionLoading === 'process' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Zap className="w-4 h-4" />
+                )}
+                Run AI Agents
+              </button>
             )}
 
             {(pa.status === 'hitl_required' || pa.status === 'ready_for_review') && (

@@ -9,16 +9,18 @@ import type { ExecutionLogEntry } from '@/lib/types/pa';
 const stepLabels: Record<string, string> = {
   clinical_data_gathering: 'Clinical Data Gathering',
   policy_analysis: 'Policy Analysis',
+  documentation_assembly: 'Documentation Assembly',
   pa_packet_generation: 'PA Packet Generation',
   compliance_validation: 'Compliance Validation',
   error: 'Error',
 };
 
 const stepDescriptions: Record<string, string> = {
-  clinical_data_gathering: 'Retrieving patient demographics, conditions, medications, and procedures from FHIR/Elasticsearch',
-  policy_analysis: 'Matching payer policies and analyzing coverage criteria against clinical data',
+  clinical_data_gathering: 'Querying patient data via ES|QL across conditions, medications, procedures, and observations indices',
+  policy_analysis: 'Running ES|QL policy stats and hybrid search to match coverage criteria against clinical data',
+  documentation_assembly: 'Generating medical necessity narrative and assembling PA documentation packet',
   pa_packet_generation: 'Generating medical necessity narrative and assembling PA documentation',
-  compliance_validation: 'Running compliance checks and calculating confidence score',
+  compliance_validation: 'Validating CMS timeline compliance, documentation completeness, and calculating confidence score',
 };
 
 export default function AgentTimeline({ executionLog }: { executionLog?: ExecutionLogEntry[] }) {

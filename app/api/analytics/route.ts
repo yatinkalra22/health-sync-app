@@ -1,21 +1,22 @@
 import { NextResponse } from 'next/server';
 import { elasticsearch, getAnalyticsWithESQL } from '@/lib/services/elasticsearch';
-import { DEMO_PA_REQUESTS, getDemoMetrics } from '@/lib/demo-data';
+import { getAllDemoPARequests } from '@/lib/demo-store';
 
 export async function GET() {
   try {
     if (!elasticsearch) {
-      // Demo mode analytics
-      const metrics = getDemoMetrics();
-      const requests = DEMO_PA_REQUESTS;
+      // Demo mode analytics - computed from live demo store
+      const requests = getAllDemoPARequests();
+      const total = requests.length;
+      const approved = requests.filter(r => r.status === 'approved').length;
 
       const statusBreakdown = [
-        { status: 'submitted', count: metrics.submitted },
-        { status: 'processing', count: metrics.processing },
-        { status: 'ready_for_review', count: metrics.ready_for_review },
-        { status: 'hitl_required', count: metrics.hitl_required },
-        { status: 'approved', count: metrics.approved },
-        { status: 'denied', count: metrics.denied },
+        { status: 'submitted', count: requests.filter(r => r.status === 'submitted').length },
+        { status: 'processing', count: requests.filter(r => r.status === 'processing').length },
+        { status: 'ready_for_review', count: requests.filter(r => r.status === 'ready_for_review').length },
+        { status: 'hitl_required', count: requests.filter(r => r.status === 'hitl_required').length },
+        { status: 'approved', count: approved },
+        { status: 'denied', count: requests.filter(r => r.status === 'denied').length },
       ];
 
       const payerBreakdown = requests.reduce<Record<string, number>>((acc, r) => {
@@ -28,9 +29,14 @@ export async function GET() {
         return acc;
       }, {});
 
-      const approvalRate = metrics.total > 0
-        ? Math.round((metrics.approved / metrics.total) * 100)
-        : 0;
+      const avgConfidence = Math.round(
+        (requests
+          .filter(r => r.compliance_checks?.confidence_score)
+          .reduce((sum, r) => sum + (r.compliance_checks?.confidence_score || 0), 0) /
+          (requests.filter(r => r.compliance_checks?.confidence_score).length || 1)) * 100
+      );
+
+      const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
 
       const processingTimeline = [
         { day: 'Mon', submitted: 3, processed: 2 },
@@ -50,9 +56,9 @@ export async function GET() {
       ];
 
       return NextResponse.json({
-        total: metrics.total,
-        avg_confidence: metrics.avg_confidence,
-        avg_processing_time_hours: metrics.avg_processing_time_hours,
+        total,
+        avg_confidence: avgConfidence,
+        avg_processing_time_hours: 4.2,
         approval_rate: approvalRate,
         status_breakdown: statusBreakdown,
         payer_breakdown: Object.entries(payerBreakdown).map(([payer, count]) => ({ payer, count })),

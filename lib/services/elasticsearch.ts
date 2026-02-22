@@ -72,19 +72,28 @@ export async function searchPARequests(filters: {
     mustClauses.push({ match_all: {} });
   }
 
-  const result = await elasticsearch.search({
-    index: ES_INDICES.PA_REQUESTS,
-    query: {
-      bool: { must: mustClauses },
-    },
-    sort: [{ created_at: { order: 'desc' } }],
-    size: Math.min(filters.limit || API_DEFAULT_PAGE_SIZE, API_MAX_PAGE_SIZE),
-  } as SearchRequest);
+  try {
+    const result = await elasticsearch.search({
+      index: ES_INDICES.PA_REQUESTS,
+      query: {
+        bool: { must: mustClauses },
+      },
+      sort: [{ created_at: { order: 'desc' } }],
+      size: Math.min(filters.limit || API_DEFAULT_PAGE_SIZE, API_MAX_PAGE_SIZE),
+    } as SearchRequest);
 
-  return result.hits.hits.map((hit) => ({
-    ...(hit._source as object),
-    _id: hit._id,
-  }));
+    return result.hits.hits.map((hit) => ({
+      ...(hit._source as object),
+      _id: hit._id,
+    }));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes('index_not_found_exception')) {
+      console.warn(`Index ${ES_INDICES.PA_REQUESTS} not found. Run "npm run setup:es" to create indices.`);
+      return [];
+    }
+    throw err;
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
