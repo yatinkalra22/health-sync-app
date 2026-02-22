@@ -185,8 +185,12 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis
                 dataKey="status"
-                tick={{ fontSize: 11 }}
-                tickFormatter={(v) => STATUS_LABELS[v] || v}
+                tick={{ fontSize: 10 }}
+                tickFormatter={(v) => (STATUS_LABELS[v] || v).slice(0, 8)}
+                interval={0}
+                angle={-20}
+                textAnchor="end"
+                height={50}
               />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip
@@ -221,8 +225,8 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
                 nameKey="payer"
                 cx="50%"
                 cy="50%"
-                outerRadius={100}
-                label={({ name, percent }: { name?: string; percent?: number }) => `${name || ''} (${((percent || 0) * 100).toFixed(0)}%)`}
+                outerRadius={80}
+                label={({ name, percent }: { name?: string; percent?: number }) => `${(name || '').slice(0, 10)} ${((percent || 0) * 100).toFixed(0)}%`}
                 labelLine={{ strokeWidth: 1 }}
               >
                 {data.payer_breakdown.map((_, i) => (
@@ -230,6 +234,7 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
                 ))}
               </Pie>
               <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+              <Legend wrapperStyle={{ fontSize: '11px' }} />
             </PieChart>
           </ResponsiveContainer>
         </motion.div>
@@ -293,8 +298,9 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
               <YAxis
                 type="category"
                 dataKey="agent"
-                tick={{ fontSize: 10 }}
-                width={140}
+                tick={{ fontSize: 9 }}
+                width={110}
+                tickFormatter={(v: string) => v.length > 14 ? v.slice(0, 14) + '…' : v}
               />
               <Tooltip
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}

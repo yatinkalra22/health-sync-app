@@ -98,7 +98,7 @@ export default function PADashboard({ initialData }: Props) {
           </div>
 
           {/* Status Filters */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
             <SlidersHorizontal className="w-4 h-4 text-slate-400 flex-shrink-0" />
             {statusFilters.map((filter) => (
               <button

@@ -135,12 +135,20 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
                 <Stethoscope className="w-3.5 h-3.5" />
                 CPT {pa.procedure_code}
               </span>
+              {pa.compliance_checks?.confidence_score !== undefined && (
+                <span className="flex items-center gap-1.5 sm:hidden">
+                  <ConfidenceRing score={pa.compliance_checks.confidence_score} size={24} />
+                  <span className="text-xs font-semibold text-slate-600">
+                    {Math.round(pa.compliance_checks.confidence_score * 100)}%
+                  </span>
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             {pa.compliance_checks?.confidence_score !== undefined && (
-              <div className="text-center">
+              <div className="text-center hidden sm:block">
                 <ConfidenceRing score={pa.compliance_checks.confidence_score} size={56} />
                 <p className="text-[10px] text-slate-400 mt-1 font-medium">Confidence</p>
               </div>
@@ -151,7 +159,7 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
                 onClick={handleProcess}
                 disabled={actionLoading !== null}
                 className={cn(
-                  'inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl shadow-lg transition-all text-sm font-semibold disabled:opacity-50',
+                  'inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 text-white rounded-xl shadow-lg transition-all text-sm font-semibold disabled:opacity-50',
                   processComplete
                     ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-emerald-500/25'
                     : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-blue-500/25'

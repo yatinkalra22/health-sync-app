@@ -159,7 +159,7 @@ export default function NewPAForm() {
               placeholder="e.g., 27447"
               className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all mb-2"
             />
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto sm:max-h-none">
               {COMMON_PROCEDURES.map(p => (
                 <button
                   key={p.code}

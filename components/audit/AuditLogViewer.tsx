@@ -88,8 +88,8 @@ function AuditRow({ log, index }: { log: AuditLog; index: number }) {
           animate={{ height: 'auto', opacity: 1 }}
           className="overflow-hidden px-3 pb-3"
         >
-          <div className="ml-11 bg-slate-50 rounded-lg p-3 space-y-2 text-xs">
-            <div className="grid grid-cols-2 gap-2">
+          <div className="ml-0 sm:ml-11 bg-slate-50 rounded-lg p-3 space-y-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <span className="text-slate-400">Audit ID:</span>{' '}
                 <span className="font-mono text-slate-600">{log.audit_id}</span>

@@ -156,8 +156,8 @@ export default function AgentMonitor({ paRequests }: { paRequests: PARequest[] }
                     <p className="text-xs text-slate-500 mt-0.5 truncate">{agent.description}</p>
                   </div>
 
-                  {/* Stats */}
-                  <div className="hidden sm:flex items-center gap-4">
+                  {/* Stats - compact on mobile, full on desktop */}
+                  <div className="flex items-center gap-2 sm:gap-4">
                     <div className="text-center">
                       <div className="text-sm font-bold text-emerald-600">{stats.completed}</div>
                       <div className="text-[10px] text-slate-400">Done</div>
@@ -168,7 +168,7 @@ export default function AgentMonitor({ paRequests }: { paRequests: PARequest[] }
                         <div className="text-[10px] text-slate-400">Active</div>
                       </div>
                     )}
-                    <div className="flex items-center gap-1.5">
+                    <div className="hidden sm:flex items-center gap-1.5">
                       <div className={cn('w-2 h-2 rounded-full', colors.dot, stats.inProgress > 0 && 'animate-pulse')} />
                       <span className="text-xs text-slate-500">Ready</span>
                     </div>
