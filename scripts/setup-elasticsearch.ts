@@ -154,6 +154,21 @@ const indices: Record<string, object> = {
       },
     },
   },
+  'healthsync-audit-logs': {
+    mappings: {
+      properties: {
+        audit_id: { type: 'keyword' },
+        timestamp: { type: 'date' },
+        action: { type: 'keyword' },
+        agent: { type: 'keyword' },
+        pa_id: { type: 'keyword' },
+        patient_id: { type: 'keyword' },
+        details: { type: 'text' },
+        phi_accessed: { type: 'boolean' },
+        duration_ms: { type: 'integer' },
+      },
+    },
+  },
 };
 
 async function createIndices() {

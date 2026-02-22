@@ -2,7 +2,7 @@
 
 A multi-agent prior authorization (PA) automation system that reduces PA processing time from **2-7 days to 4-8 hours** through intelligent agent orchestration.
 
-Built with **Next.js 16**, **TypeScript**, **Elasticsearch**, and **Claude AI** (Anthropic).
+Built with **Next.js 16**, **TypeScript**, **Elasticsearch** (ES|QL + Search), and **Claude AI** (Anthropic).
 
 ---
 
@@ -10,13 +10,25 @@ Built with **Next.js 16**, **TypeScript**, **Elasticsearch**, and **Claude AI** 
 
 Prior authorization is healthcare's biggest administrative bottleneck - costing **$150B annually** in the US. HealthSync AI automates the entire PA workflow using 5 specialized AI agents:
 
-1. **Coordinator Agent** - Orchestrates the full PA pipeline and manages state
-2. **Clinical Data Gatherer** - Queries FHIR patient data from Elasticsearch (conditions, medications, procedures, observations)
-3. **Policy Analyzer** - Searches payer policy documents using hybrid search to match coverage criteria
+1. **Coordinator Agent** - Orchestrates the full PA pipeline, manages state, and writes audit logs for every PHI access
+2. **Clinical Data Gatherer** - Queries FHIR patient data from Elasticsearch using **ES|QL** aggregations across conditions, medications, procedures, and observations
+3. **Policy Analyzer** - Searches payer policy documents using **ES|QL stats** and hybrid search to match coverage criteria
 4. **Documentation Assembler** - Generates structured PA packets with medical necessity narratives
 5. **Compliance Validator** - Validates CMS timeline compliance (72h expedited / 7-day standard), documentation completeness, and flags cases for human review
 
 When a clinician submits a PA request, the agents run in sequence, and the result is either auto-approved or escalated to a human reviewer (HITL) with full reasoning visible.
+
+---
+
+## Elasticsearch Integration
+
+HealthSync uses Elasticsearch as both its data layer and analytics engine:
+
+- **ES|QL Queries** - ClinicalDataGatherer uses `FROM ... | WHERE ... | STATS` to aggregate patient clinical profiles across indices. PolicyAnalyzer uses ES|QL for payer policy statistics.
+- **Search** - Hybrid keyword + term search on payer policies (`bool` queries with `must`/`should` clauses)
+- **ES|QL Analytics** - The analytics dashboard is powered by ES|QL queries (`STATS COUNT(*) BY status`, `AVG(compliance_score)`, etc.)
+- **8 Indices** - patients, conditions, medications, procedures, observations, pa-requests, policies, audit-logs
+- **Audit Logging** - Every agent action and PHI access is logged to `healthsync-audit-logs` with timestamps, duration, and compliance metadata
 
 ---
 
@@ -44,7 +56,11 @@ npm install
 
 ### 2. Configure Environment Variables
 
-Create a `.env.local` file in the project root (or copy `.env`):
+Copy the example file and fill in your credentials:
+
+```bash
+cp .env.example .env.local
+```
 
 ```bash
 # Elasticsearch (leave empty for demo mode)
@@ -142,6 +158,7 @@ health-sync-app/
 │   ├── page.tsx                  # Dashboard (Server Component)
 │   ├── layout.tsx                # Root layout with sidebar
 │   ├── new/page.tsx              # New PA submission form
+│   ├── analytics/page.tsx        # Analytics dashboard with Recharts
 │   ├── pa/[id]/page.tsx          # PA detail view
 │   ├── error.tsx                 # Error boundary
 │   ├── global-error.tsx          # Global error boundary
@@ -152,25 +169,27 @@ health-sync-app/
 │       ├── pa-requests/[id]/     # GET, PATCH individual PA
 │       ├── pa-updates/[id]/      # SSE real-time updates
 │       ├── agents/execute/       # POST trigger agent processing
+│       ├── analytics/            # GET PA analytics (ES|QL powered)
 │       └── health/               # Health check endpoint
 │
 ├── components/
 │   ├── dashboard/                # PADashboard, PARequestCard, MetricsSummary
 │   ├── pa-details/               # PADetailView, PatientInfo, ClinicalDataPanel,
 │   │                               PolicyAnalysisPanel, PAPacketPanel, AgentTimeline
+│   ├── analytics/                # AnalyticsDashboard (Recharts charts)
 │   ├── forms/                    # NewPAForm
 │   └── ui/                       # Sidebar, StatusBadge, ConfidenceRing
 │
 ├── lib/
 │   ├── agents/                   # AI agent implementations
 │   │   ├── BaseAgent.ts          # Abstract base with LLM integration
-│   │   ├── CoordinatorAgent.ts   # Workflow orchestrator
-│   │   ├── ClinicalDataGatherer.ts
-│   │   ├── PolicyAnalyzer.ts
+│   │   ├── CoordinatorAgent.ts   # Workflow orchestrator + audit logging
+│   │   ├── ClinicalDataGatherer.ts  # ES|QL patient profile queries
+│   │   ├── PolicyAnalyzer.ts     # ES|QL policy stats + hybrid search
 │   │   ├── DocumentationAssembler.ts
 │   │   └── ComplianceValidator.ts
 │   ├── services/                 # External service clients
-│   │   ├── elasticsearch.ts      # ES client + CRUD operations
+│   │   ├── elasticsearch.ts      # ES client + ES|QL helper + audit logging
 │   │   ├── fhir.ts               # FHIR server client
 │   │   └── llm.ts                # Anthropic Claude wrapper
 │   ├── types/                    # TypeScript types (pa.ts, fhir.ts, agent.ts)
@@ -188,13 +207,16 @@ health-sync-app/
 │   └── useAgentStatus.ts         # Agent execution status hook
 │
 ├── scripts/                      # Setup scripts (excluded from build)
-│   ├── setup-elasticsearch.ts    # Create ES indices
+│   ├── setup-elasticsearch.ts    # Create ES indices (8 indices)
 │   ├── create-sample-policies.ts # Seed payer policies
+│   ├── load-fhir-data.ts         # Load Synthea FHIR bundles
+│   ├── index-fhir-to-elasticsearch.ts  # Index FHIR → ES
 │   └── health-check.ts           # Verify service connections
 │
 ├── docs/                         # Project documentation
 ├── docker-compose.yml            # FHIR server + PostgreSQL
 ├── next.config.ts                # Security headers, React Compiler
+├── .env.example                  # Environment variable template
 └── .env                          # Environment variables
 ```
 
@@ -226,6 +248,7 @@ health-sync-app/
 | `PATCH` | `/api/pa-requests/:id` | Update PA request (status, notes) |
 | `POST` | `/api/agents/execute` | Trigger agent processing for a PA |
 | `GET` | `/api/pa-updates/:id` | SSE stream for real-time PA status updates |
+| `GET` | `/api/analytics` | PA workflow analytics (ES|QL powered) |
 | `GET` | `/api/health` | Health check |
 
 All mutation endpoints use **Zod validation**. Status values are validated against: `submitted`, `processing`, `ready_for_review`, `hitl_required`, `approved`, `denied`, `failed`.
@@ -235,6 +258,9 @@ All mutation endpoints use **Zod validation**. Status values are validated again
 ## Key Features
 
 - **Multi-Agent Pipeline** - 5 specialized agents process PA requests end-to-end
+- **ES|QL Integration** - Agents use ES|QL for cross-index patient profiling and policy analytics
+- **Analytics Dashboard** - Recharts-powered visualizations: status distribution, payer breakdown, processing timeline, agent performance
+- **Audit Logging** - Every agent action and PHI access logged to Elasticsearch with timestamps, duration, and compliance metadata
 - **Demo Mode** - Works fully without any external services configured
 - **Real-Time Updates** - SSE streaming + SWR polling for live status changes
 - **HITL Workflow** - Approve/deny buttons with denial reason input for human review
@@ -260,7 +286,7 @@ All mutation endpoints use **Zod validation**. Status values are validated again
 | Animation | Framer Motion |
 | Data Fetching | SWR (polling) + SSE (streaming) |
 | Validation | Zod |
-| Search & Storage | Elasticsearch 9.3+ |
+| Search & Storage | Elasticsearch 9.3+ (ES|QL, Search, Audit Logs) |
 | AI / LLM | Anthropic Claude (via `@anthropic-ai/sdk`) |
 | Healthcare | HAPI FHIR R4 Server (Docker) |
 | Charts | Recharts |
@@ -278,7 +304,7 @@ If you want to use real Elasticsearch instead of demo mode:
 4. Run index setup:
 
 ```bash
-npm run setup:es          # Creates 7 indices (patients, conditions, medications, etc.)
+npm run setup:es          # Creates 8 indices (patients, conditions, medications, etc.)
 npm run setup:policies    # Seeds sample payer policies
 npm run health-check      # Verify connection
 ```
