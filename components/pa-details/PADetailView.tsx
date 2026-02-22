@@ -15,7 +15,7 @@ import PolicyAnalysisPanel from './PolicyAnalysisPanel';
 import PAPacketPanel from './PAPacketPanel';
 import AgentTimeline from './AgentTimeline';
 import { approvePARequest, denyPARequest, processPA } from '@/actions/pa-actions';
-import type { PARequest } from '@/lib/types/pa';
+import type { PARequest, ExecutionLogEntry } from '@/lib/types/pa';
 
 export default function PADetailView({ pa }: { pa: PARequest }) {
   const router = useRouter();
@@ -23,24 +23,40 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
   const [processComplete, setProcessComplete] = useState(false);
   const [showDenyInput, setShowDenyInput] = useState(false);
   const [denyReason, setDenyReason] = useState('');
+  const [streamingLog, setStreamingLog] = useState<ExecutionLogEntry[] | null>(null);
+
+  const handleStreamingComplete = useCallback(() => {
+    setStreamingLog(null);
+    setActionLoading(null);
+    setProcessComplete(true);
+    router.refresh();
+    setTimeout(() => setProcessComplete(false), 1500);
+  }, [router]);
 
   const handleProcess = useCallback(async () => {
     setActionLoading('process');
     try {
-      await processPA(pa.pa_id, {
+      const result = await processPA(pa.pa_id, {
         patient_id: pa.patient_id,
         procedure_code: pa.procedure_code,
         diagnosis_codes: pa.diagnosis_codes,
         urgency: pa.urgency,
         payer: pa.payer,
       });
-      setProcessComplete(true);
-      // Brief pause to show success before refreshing
-      await new Promise(resolve => setTimeout(resolve, 800));
-      router.refresh();
-    } finally {
+
+      // If we got execution_log back, enter streaming animation mode
+      if (result.execution_log && result.execution_log.length > 0) {
+        setStreamingLog(result.execution_log);
+        // actionLoading stays 'process' — animation will clear it via handleStreamingComplete
+      } else {
+        setProcessComplete(true);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        router.refresh();
+        setActionLoading(null);
+        setTimeout(() => setProcessComplete(false), 1500);
+      }
+    } catch {
       setActionLoading(null);
-      setTimeout(() => setProcessComplete(false), 1500);
     }
   }, [pa, router]);
 
@@ -258,7 +274,11 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
 
         {/* Right column - Agent timeline */}
         <div className="space-y-6">
-          <AgentTimeline executionLog={pa.execution_log} />
+          <AgentTimeline
+            executionLog={streamingLog || pa.execution_log}
+            streaming={streamingLog !== null}
+            onStreamingComplete={handleStreamingComplete}
+          />
 
           {/* Complexity score */}
           {pa.clinical_data?.complexity_score !== undefined && (

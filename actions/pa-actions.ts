@@ -93,7 +93,11 @@ export async function processPA(paId: string, paData: {
 
     revalidatePath('/');
     revalidatePath(`/pa/${paId}`);
-    return { success: true, status: result.final_status };
+    return {
+      success: true,
+      status: result.final_status,
+      execution_log: result.execution_log,
+    };
   }
 
   // Live mode: use real agents (handled by agent-actions.ts)
