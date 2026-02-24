@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { CoordinatorAgent } from '@/lib/agents/CoordinatorAgent';
 import { elasticsearch, updatePARequest } from '@/lib/services/elasticsearch';
-import { updateDemoPARequest } from '@/lib/demo-store';
-import { runDemoAgentPipeline } from '@/lib/agents/demo-agent-runner';
+import { updateDemoPARequest, runDemoAgentPipeline } from '@/mock';
 import { ES_INDICES } from '@/lib/constants';
 import type { PARequest } from '@/lib/types/pa';
 

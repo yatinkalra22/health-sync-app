@@ -1,6 +1,6 @@
 import AuditLogViewer from '@/components/audit/AuditLogViewer';
 import { elasticsearch, getRecentAuditLogs } from '@/lib/services/elasticsearch';
-import { getDemoAuditLogs } from '@/lib/demo-store';
+import { getDemoAuditLogs } from '@/mock';
 
 export const dynamic = 'force-dynamic';
 

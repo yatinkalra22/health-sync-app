@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getPARequest, elasticsearch } from '@/lib/services/elasticsearch';
-import { DEMO_PA_REQUESTS } from '@/lib/demo-data';
+import { getDemoPARequest } from '@/mock';
 import { SSE_POLL_INTERVAL_MS } from '@/lib/constants';
 
 export async function GET(
@@ -16,7 +16,7 @@ export async function GET(
         try {
           let pa;
           if (!elasticsearch) {
-            pa = DEMO_PA_REQUESTS.find(p => p.pa_id === id);
+            pa = getDemoPARequest(id);
           } else {
             pa = await getPARequest(id);
           }

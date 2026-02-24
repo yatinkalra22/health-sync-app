@@ -14,6 +14,7 @@ import ClinicalDataPanel from './ClinicalDataPanel';
 import PolicyAnalysisPanel from './PolicyAnalysisPanel';
 import PAPacketPanel from './PAPacketPanel';
 import AgentTimeline from './AgentTimeline';
+import CompletionCelebration from './CompletionCelebration';
 import { approvePARequest, denyPARequest, processPA } from '@/actions/pa-actions';
 import type { PARequest, ExecutionLogEntry } from '@/lib/types/pa';
 
@@ -24,14 +25,13 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
   const [showDenyInput, setShowDenyInput] = useState(false);
   const [denyReason, setDenyReason] = useState('');
   const [streamingLog, setStreamingLog] = useState<ExecutionLogEntry[] | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const handleStreamingComplete = useCallback(() => {
     setStreamingLog(null);
     setActionLoading(null);
-    setProcessComplete(true);
-    router.refresh();
-    setTimeout(() => setProcessComplete(false), 1500);
-  }, [router]);
+    setShowCelebration(true);
+  }, []);
 
   const handleProcess = useCallback(async () => {
     setActionLoading('process');
@@ -314,6 +314,19 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
           )}
         </div>
       </div>
+
+      {/* Completion Celebration Overlay */}
+      {showCelebration && (
+        <CompletionCelebration
+          confidenceScore={pa.compliance_checks?.confidence_score ?? 0.85}
+          onDismiss={() => {
+            setShowCelebration(false);
+            setProcessComplete(true);
+            router.refresh();
+            setTimeout(() => setProcessComplete(false), 1500);
+          }}
+        />
+      )}
     </div>
   );
 }

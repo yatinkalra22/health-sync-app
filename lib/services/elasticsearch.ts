@@ -154,9 +154,8 @@ export async function getAnalyticsWithESQL() {
     `),
     esqlQuery(`
       FROM ${ES_INDICES.PA_REQUESTS}
-      | WHERE compliance_score IS NOT NULL
-      | STATS avg_score = AVG(compliance_score), total = COUNT(*)
-    `),
+      | STATS total = COUNT(*)
+    `).catch(() => []),
   ]);
 
   return { statusCounts, payerCounts, avgConfidence };

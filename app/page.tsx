@@ -1,6 +1,6 @@
 import PADashboard from '@/components/dashboard/PADashboard';
 import { elasticsearch, searchPARequests } from '@/lib/services/elasticsearch';
-import { getAllDemoPARequests } from '@/lib/demo-store';
+import { getAllDemoPARequests } from '@/mock';
 
 export const dynamic = 'force-dynamic';
 

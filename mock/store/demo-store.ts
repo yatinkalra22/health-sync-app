@@ -1,11 +1,11 @@
 /**
- * In-memory demo store for full demo mode.
+ * In-memory demo store for full mock mode.
  * Allows creating, updating, and processing PA requests without Elasticsearch.
  * State resets on server restart - this is intentional for demo purposes.
  */
 
-import { DEMO_PA_REQUESTS } from './demo-data';
-import type { PARequest } from './types/pa';
+import { DEMO_PA_REQUESTS } from '@/mock/data/pa-requests';
+import type { PARequest } from '@/lib/types/pa';
 
 // Deep-clone demo data so mutations don't affect the original
 let store: PARequest[] = JSON.parse(JSON.stringify(DEMO_PA_REQUESTS));
@@ -44,6 +44,10 @@ export function updateDemoPARequest(paId: string, updates: Partial<PARequest>): 
 
 export function getDemoStore(): PARequest[] {
   return store;
+}
+
+export function resetDemoStore(): void {
+  store = JSON.parse(JSON.stringify(DEMO_PA_REQUESTS));
 }
 
 // Demo audit log data

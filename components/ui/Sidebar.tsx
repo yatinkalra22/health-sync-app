@@ -13,6 +13,10 @@ import {
   Heart,
   Menu,
   X,
+  Database,
+  Bot,
+  FlaskConical,
+  Globe,
 } from 'lucide-react';
 
 const navItems = [
@@ -29,6 +33,15 @@ const secondaryItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [mockMode, setMockMode] = useState<{ mock_mode: boolean; reason: string; services: { elasticsearch: boolean; anthropic: boolean; fhir: boolean } } | null>(null);
+
+  // Fetch mock mode status
+  useEffect(() => {
+    fetch('/api/mock-mode')
+      .then(res => res.json())
+      .then(setMockMode)
+      .catch(() => setMockMode({ mock_mode: true, reason: 'Unable to detect', services: { elasticsearch: false, anthropic: false, fhir: false } }));
+  }, []);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -130,16 +143,92 @@ export default function Sidebar() {
       </nav>
 
       {/* Status indicator */}
-      <div className="p-4 border-t border-slate-700/50">
-        <div className="glass-card rounded-lg p-3 bg-slate-800/60">
+      <div className="p-4 border-t border-slate-700/50 space-y-3">
+        {/* Mock / Production Mode Indicator */}
+        <div className={cn(
+          'rounded-lg p-3 border transition-colors',
+          mockMode?.mock_mode
+            ? 'bg-amber-500/5 border-amber-500/20'
+            : 'bg-emerald-500/5 border-emerald-500/20'
+        )}>
+          <div className="flex items-center gap-2 mb-1.5">
+            {mockMode?.mock_mode ? (
+              <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
+            ) : (
+              <Globe className="w-3.5 h-3.5 text-emerald-400" />
+            )}
+            <span className={cn(
+              'text-xs font-semibold',
+              mockMode?.mock_mode ? 'text-amber-400' : 'text-emerald-400'
+            )}>
+              {mockMode?.mock_mode ? 'Mock Mode' : 'Production Mode'}
+            </span>
+          </div>
+          <p className="text-[10px] text-slate-400 leading-relaxed mb-2">
+            {mockMode?.mock_mode
+              ? 'Using in-memory demo data. No external services required.'
+              : 'Connected to live Elasticsearch and AI services.'}
+          </p>
+          <div className="flex flex-wrap gap-1">
+            <span className={cn(
+              'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium',
+              mockMode?.services.elasticsearch
+                ? 'bg-emerald-500/10 text-emerald-400'
+                : 'bg-slate-700/50 text-slate-500'
+            )}>
+              <div className={cn('w-1 h-1 rounded-full', mockMode?.services.elasticsearch ? 'bg-emerald-400' : 'bg-slate-600')} />
+              ES
+            </span>
+            <span className={cn(
+              'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium',
+              mockMode?.services.anthropic
+                ? 'bg-emerald-500/10 text-emerald-400'
+                : 'bg-slate-700/50 text-slate-500'
+            )}>
+              <div className={cn('w-1 h-1 rounded-full', mockMode?.services.anthropic ? 'bg-emerald-400' : 'bg-slate-600')} />
+              AI
+            </span>
+            <span className={cn(
+              'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium',
+              mockMode?.services.fhir
+                ? 'bg-emerald-500/10 text-emerald-400'
+                : 'bg-slate-700/50 text-slate-500'
+            )}>
+              <div className={cn('w-1 h-1 rounded-full', mockMode?.services.fhir ? 'bg-emerald-400' : 'bg-slate-600')} />
+              FHIR
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-lg p-3 bg-slate-800/80 border border-slate-700/50">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-medium text-slate-300">System Active</span>
+            <span className="text-xs font-semibold text-slate-200">System Active</span>
           </div>
-          <div className="flex justify-between text-[10px] text-slate-500">
+          <div className="flex justify-between text-[11px] text-slate-300">
             <span>Agents: 5 ready</span>
-            <span>Demo Mode</span>
+            <span className="font-medium">{mockMode?.mock_mode ? 'Mock Data' : 'Live Data'}</span>
           </div>
+        </div>
+
+        {/* Tech Stack Badges */}
+        <div className="flex flex-wrap gap-1.5">
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-yellow-500/10 border border-yellow-500/20 text-[10px] font-semibold text-yellow-400">
+            <Database className="w-3 h-3" />
+            ES|QL
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-[10px] font-semibold text-blue-400">
+            <Bot className="w-3 h-3" />
+            Claude AI
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-semibold text-cyan-400">
+            <Zap className="w-3 h-3" />
+            FHIR R4
+          </span>
+        </div>
+        <div className="flex justify-between text-[10px] text-slate-400 px-0.5">
+          <span>8 ES|QL Indices</span>
+          <span>5 AI Agents</span>
         </div>
       </div>
     </>

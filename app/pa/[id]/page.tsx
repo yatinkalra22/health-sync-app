@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { elasticsearch, getPARequest } from '@/lib/services/elasticsearch';
-import { getDemoPARequest } from '@/lib/demo-store';
+import { getDemoPARequest } from '@/mock';
 import PADetailView from '@/components/pa-details/PADetailView';
 import type { PARequest } from '@/lib/types/pa';
 

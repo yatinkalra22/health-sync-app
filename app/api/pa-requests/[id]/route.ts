@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getPARequest, elasticsearch, updatePARequest } from '@/lib/services/elasticsearch';
-import { getDemoPARequest, updateDemoPARequest } from '@/lib/demo-store';
+import { getDemoPARequest, updateDemoPARequest } from '@/mock';
 import { PA_STATUSES } from '@/lib/constants';
 
 const patchPASchema = z.object({

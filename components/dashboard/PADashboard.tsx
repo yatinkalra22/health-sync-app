@@ -6,6 +6,8 @@ import Link from 'next/link';
 import useSWR from 'swr';
 import { Plus, Search, SlidersHorizontal } from 'lucide-react';
 import MetricsSummary from './MetricsSummary';
+import ImpactHeroBanner from './ImpactHeroBanner';
+import QuickDemoScenarios from './QuickDemoScenarios';
 import PARequestCard from './PARequestCard';
 import type { PARequest, PAStatus } from '@/lib/types/pa';
 import { SWR_REFRESH_INTERVAL_MS } from '@/lib/constants';
@@ -71,6 +73,12 @@ export default function PADashboard({ initialData }: Props) {
           New PA Request
         </Link>
       </motion.div>
+
+      {/* Impact Hero Banner */}
+      <ImpactHeroBanner paRequests={paRequests} />
+
+      {/* Quick Demo Scenarios */}
+      <QuickDemoScenarios />
 
       {/* Metrics */}
       <div className="mb-8">

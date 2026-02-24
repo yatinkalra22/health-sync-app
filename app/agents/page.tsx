@@ -1,5 +1,5 @@
 import AgentMonitor from '@/components/agents/AgentMonitor';
-import { getAllDemoPARequests } from '@/lib/demo-store';
+import { getAllDemoPARequests } from '@/mock';
 
 export const dynamic = 'force-dynamic';
 

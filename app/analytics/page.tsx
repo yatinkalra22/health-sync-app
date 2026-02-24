@@ -10,7 +10,7 @@ async function getAnalytics() {
     return res.json();
   } catch {
     // Fallback: compute directly from demo data
-    const { getDemoMetrics, DEMO_PA_REQUESTS } = await import('@/lib/demo-data');
+    const { getDemoMetrics, DEMO_PA_REQUESTS, MOCK_PROCESSING_TIMELINE, MOCK_AGENT_PERFORMANCE } = await import('@/mock');
     const metrics = getDemoMetrics();
     const requests = DEMO_PA_REQUESTS;
 
@@ -34,24 +34,11 @@ async function getAnalytics() {
       ],
       payer_breakdown: Object.entries(payerBreakdown).map(([payer, count]) => ({ payer, count })),
       urgency_breakdown: [
-        { urgency: 'standard', count: requests.filter(r => r.urgency === 'standard').length },
-        { urgency: 'expedited', count: requests.filter(r => r.urgency === 'expedited').length },
+        { urgency: 'standard', count: requests.filter((r: { urgency: string }) => r.urgency === 'standard').length },
+        { urgency: 'expedited', count: requests.filter((r: { urgency: string }) => r.urgency === 'expedited').length },
       ],
-      processing_timeline: [
-        { day: 'Mon', submitted: 3, processed: 2 },
-        { day: 'Tue', submitted: 5, processed: 4 },
-        { day: 'Wed', submitted: 2, processed: 3 },
-        { day: 'Thu', submitted: 4, processed: 3 },
-        { day: 'Fri', submitted: 6, processed: 5 },
-        { day: 'Sat', submitted: 1, processed: 2 },
-        { day: 'Sun', submitted: 2, processed: 1 },
-      ],
-      agent_performance: [
-        { agent: 'ClinicalDataGatherer', avg_duration_ms: 1200, success_rate: 98 },
-        { agent: 'PolicyAnalyzer', avg_duration_ms: 2400, success_rate: 95 },
-        { agent: 'DocumentationAssembler', avg_duration_ms: 3100, success_rate: 97 },
-        { agent: 'ComplianceValidator', avg_duration_ms: 800, success_rate: 100 },
-      ],
+      processing_timeline: MOCK_PROCESSING_TIMELINE,
+      agent_performance: MOCK_AGENT_PERFORMANCE,
       data_source: 'demo',
     };
   }

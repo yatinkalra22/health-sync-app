@@ -1,5 +1,5 @@
 /**
- * Simulates the 5-agent PA processing pipeline in demo mode.
+ * Simulates the 5-agent PA processing pipeline in mock mode.
  * Generates realistic clinical data, policy analysis, PA packets, and compliance checks
  * with step-by-step execution logging - no external services required.
  */

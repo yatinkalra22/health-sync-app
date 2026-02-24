@@ -2,8 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { elasticsearch, indexPARequest, updatePARequest } from '@/lib/services/elasticsearch';
-import { addDemoPARequest, updateDemoPARequest } from '@/lib/demo-store';
-import { runDemoAgentPipeline } from '@/lib/agents/demo-agent-runner';
+import { addDemoPARequest, updateDemoPARequest, runDemoAgentPipeline } from '@/mock';
 import type { PARequest } from '@/lib/types/pa';
 
 export async function createPARequest(formData: FormData) {

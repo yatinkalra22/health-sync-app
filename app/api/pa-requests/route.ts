@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { elasticsearch, searchPARequests, indexPARequest } from '@/lib/services/elasticsearch';
 import { CoordinatorAgent } from '@/lib/agents/CoordinatorAgent';
-import { getAllDemoPARequests, addDemoPARequest, updateDemoPARequest } from '@/lib/demo-store';
-import { runDemoAgentPipeline } from '@/lib/agents/demo-agent-runner';
+import { getAllDemoPARequests, addDemoPARequest, updateDemoPARequest, runDemoAgentPipeline } from '@/mock';
 import { PA_STATUSES, API_DEFAULT_PAGE_SIZE, API_MAX_PAGE_SIZE, ES_INDICES } from '@/lib/constants';
 import type { PARequest } from '@/lib/types/pa';
 
