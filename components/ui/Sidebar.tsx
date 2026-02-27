@@ -71,8 +71,8 @@ export default function Sidebar() {
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="relative py-4 px-4 border-b border-slate-700/50 flex items-center justify-center">
-        <Link href="/" className="group flex items-center gap-2">
+      <div className="relative py-4 px-3 border-b border-slate-700/50 flex items-center">
+        <Link href="/" className="group flex items-center gap-1.5">
           <Image
             src={logo}
             alt="HealthSync APP"
