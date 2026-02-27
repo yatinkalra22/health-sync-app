@@ -58,12 +58,12 @@ async function checkFHIRServer() {
   }
 }
 
-function checkAnthropicAPI() {
-  if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'sk-ant-your-key-here') {
-    console.log('  Anthropic API: CONFIGURED');
+function checkGeminiAPI() {
+  if (process.env.GEMINI_API_KEY) {
+    console.log('  Gemini API: CONFIGURED');
     return true;
   }
-  console.log('  Anthropic API: NOT CONFIGURED (will use demo mode)');
+  console.log('  Gemini API: NOT CONFIGURED (will use demo mode)');
   return false;
 }
 
@@ -75,7 +75,7 @@ async function main() {
   console.log('Services:');
   await checkElasticsearch();
   await checkFHIRServer();
-  checkAnthropicAPI();
+  checkGeminiAPI();
 
   console.log('\n========================================');
   console.log('  Health check complete!');

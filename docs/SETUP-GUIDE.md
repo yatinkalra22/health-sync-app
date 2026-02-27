@@ -10,7 +10,7 @@
 ### Required Accounts (for full functionality)
 
 - **Elastic Cloud** - [Sign up](https://cloud.elastic.co/registration) (14-day free trial)
-- **Anthropic API** - [Get API key](https://console.anthropic.com/) ($5 free credit)
+- **Google Gemini API** - [Get API key](https://aistudio.google.com/apikey) (free tier available)
 
 > The app runs in **demo mode** without these accounts. All features work with mock data.
 
@@ -49,8 +49,8 @@ Edit `.env` and fill in your credentials:
 ELASTICSEARCH_CLOUD_ID=your-deployment:base64encoded...
 ELASTICSEARCH_API_KEY=your-api-key-here
 
-# Anthropic - Get from console.anthropic.com
-ANTHROPIC_API_KEY=sk-ant-api03-...
+# Google Gemini AI - Get from aistudio.google.com/apikey
+GEMINI_API_KEY=your-gemini-api-key
 
 # FHIR Server (only if running Docker)
 FHIR_SERVER_URL=http://localhost:8080/fhir
@@ -95,7 +95,7 @@ Expected output:
 Services:
   Elasticsearch: CONNECTED (v9.3.0)
   FHIR Server: RUNNING
-  Anthropic API: CONFIGURED
+  Gemini API: CONFIGURED
 
 ========================================
   Health check complete!
@@ -128,7 +128,7 @@ npm run dev
 
 ### Required Changes
 
-1. **Set environment variables** - Copy `.env.example` to `.env` and add your Elasticsearch Cloud ID, API key, and Anthropic API key. Without these, the app runs in demo mode with mock data.
+1. **Set environment variables** - Copy `.env.example` to `.env` and add your Elasticsearch Cloud ID, API key, and Gemini API key. Without these, the app runs in demo mode with mock data.
 
 2. **Elasticsearch Cloud deployment** - Create a deployment at [cloud.elastic.co](https://cloud.elastic.co):
    - Name: `healthsync-ai-dev`
@@ -138,7 +138,7 @@ npm run dev
 
 3. **Run index setup** - After configuring Elasticsearch, run `npm run setup:es` to create all 7 indices, then `npm run setup:policies` to seed sample coverage policies.
 
-4. **Anthropic API key** - Get from [console.anthropic.com](https://console.anthropic.com). The Claude Sonnet 4 model is used for clinical summaries, policy analysis, and PA packet generation.
+4. **Gemini API key** - Get from [aistudio.google.com/apikey](https://aistudio.google.com/apikey). The Gemini 2.0 Flash model is used for clinical summaries, policy analysis, and PA packet generation.
 
 ### Optional Setup
 
@@ -168,7 +168,7 @@ npm run dev
 ## Troubleshooting
 
 ### App shows "demo mode" warnings
-- Expected when `.env` credentials are empty. Fill in Elasticsearch + Anthropic keys.
+- Expected when `.env` credentials are empty. Fill in Elasticsearch + Gemini keys.
 
 ### Elasticsearch connection fails
 - Verify Cloud ID format: `deployment-name:base64string`

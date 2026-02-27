@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-HealthSync APP is a multi-agent prior authorization (PA) automation system that reduces PA processing time from 2-7 days to 4-8 hours through intelligent agent orchestration. Built as a full-stack Next.js application with Elasticsearch for search/storage and Claude AI for clinical analysis.
+HealthSync APP is a multi-agent prior authorization (PA) automation system that reduces PA processing time from 2-7 days to 4-8 hours through intelligent agent orchestration. Built as a full-stack Next.js application with Elasticsearch for search/storage and Gemini AI for clinical analysis.
 
 ---
 
@@ -39,7 +39,7 @@ HealthSync APP is a multi-agent prior authorization (PA) automation system that 
           +-------------------------------+
           |      External Services        |
           |  - Elasticsearch Cloud 9.3+   |
-          |  - Anthropic API (Claude)     |
+          |  - Google Gemini AI           |
           |  - HAPI FHIR Server (Docker)  |
           +-------------------------------+
 ```
@@ -59,7 +59,7 @@ HealthSync APP is a multi-agent prior authorization (PA) automation system that 
 | Forms        | React Hook Form + Zod             | Form state + validation              |
 | Charts       | Recharts                          | Data visualization                   |
 | Search/DB    | Elasticsearch 9.3+                | Document search, PA storage          |
-| AI           | Anthropic SDK (Claude Sonnet 4)   | Clinical analysis, policy analysis   |
+| AI           | Google Gemini (Gemini 2.0 Flash)  | Clinical analysis, policy analysis   |
 | Healthcare   | HAPI FHIR R4 Server              | FHIR-compliant patient data          |
 | Real-time    | Server-Sent Events (SSE)          | Live PA status updates               |
 | Deployment   | Vercel (frontend) + Docker (FHIR) | Hosting                              |
@@ -118,7 +118,7 @@ healthsync-ai/
 │   │   └── PolicyAnalyzer.ts     # Policy matching agent
 │   ├── services/
 │   │   ├── elasticsearch.ts      # ES client + CRUD ops
-│   │   ├── llm.ts                # Anthropic Claude wrapper
+│   │   ├── llm.ts                # Google Gemini wrapper
 │   │   └── fhir.ts               # FHIR server client
 │   ├── types/
 │   │   ├── pa.ts                 # PA request types
@@ -155,14 +155,14 @@ When a PA request is submitted, the **CoordinatorAgent** orchestrates this pipel
 
 ```
 1. [ClinicalDataGatherer] --> Query ES for patient data
-                              Generate clinical summary (Claude)
+                              Generate clinical summary (Gemini)
                               Calculate complexity score
 
 2. [PolicyAnalyzer]        --> Search matching policies in ES
-                              Extract coverage criteria (Claude)
+                              Extract coverage criteria (Gemini)
                               Calculate coverage probability
 
-3. [PA Packet Generator]   --> Generate medical necessity narrative (Claude)
+3. [PA Packet Generator]   --> Generate medical necessity narrative (Gemini)
                               Assemble packet with clinical evidence
 
 4. [Compliance Validator]  --> Run automated compliance checks
@@ -186,7 +186,7 @@ When a PA request is submitted, the **CoordinatorAgent** orchestrates this pipel
 - Forms POST to `/api/pa-requests` then redirect
 
 ### Demo Mode
-When Elasticsearch/Anthropic credentials are not set, the app automatically falls back to `lib/demo-data.ts` with 6 pre-built PA requests showing various statuses.
+When Elasticsearch/Gemini credentials are not set, the app automatically falls back to `lib/demo-data.ts` with 6 pre-built PA requests showing various statuses.
 
 ---
 

@@ -1,39 +1,40 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { LLM_MODEL, LLM_DEFAULT_MAX_TOKENS } from '@/lib/constants';
 
-function createClient(): Anthropic | null {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.warn('Anthropic API key not configured - running in demo mode');
+function createClient(): GoogleGenerativeAI | null {
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn('Gemini API key not configured - running in demo mode');
     return null;
   }
 
-  return new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
+  return new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 }
 
-export const anthropic = createClient();
+export const genAI = createClient();
 
-export async function callClaude(
-  messages: Anthropic.MessageParam[],
+export async function callLLM(
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   systemPrompt?: string,
   maxTokens = LLM_DEFAULT_MAX_TOKENS
 ): Promise<string> {
-  if (!anthropic) {
+  if (!genAI) {
     return 'Demo mode: AI analysis would appear here with a configured API key.';
   }
 
-  const response = await anthropic.messages.create({
+  const model = genAI.getGenerativeModel({
     model: LLM_MODEL,
-    max_tokens: maxTokens,
-    system: systemPrompt,
-    messages,
+    systemInstruction: systemPrompt,
+    generationConfig: { maxOutputTokens: maxTokens },
   });
 
-  const content = response.content[0];
-  if (content.type === 'text') {
-    return content.text;
-  }
+  const history = messages.slice(0, -1).map(m => ({
+    role: m.role === 'assistant' ? 'model' as const : 'user' as const,
+    parts: [{ text: m.content }],
+  }));
 
-  return '';
+  const lastMessage = messages[messages.length - 1];
+  const chat = model.startChat({ history });
+  const result = await chat.sendMessage(lastMessage.content);
+
+  return result.response.text();
 }

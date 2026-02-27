@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 /**
  * GET /api/mock-mode - Returns current mock mode status.
@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET() {
   const envValue = process.env.NEXT_PUBLIC_MOCK_MODE;
   const hasES = !!(process.env.ELASTICSEARCH_CLOUD_ID && process.env.ELASTICSEARCH_API_KEY);
-  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+  const hasAI = !!process.env.GEMINI_API_KEY;
 
   let isMock: boolean;
   if (envValue === 'true') isMock = true;
@@ -21,7 +21,7 @@ export async function GET() {
     reason: envValue ? `NEXT_PUBLIC_MOCK_MODE=${envValue}` : (hasES ? 'Elasticsearch configured' : 'Elasticsearch not configured (auto-fallback)'),
     services: {
       elasticsearch: hasES,
-      anthropic: hasAnthropic,
+      ai: hasAI,
       fhir: !!process.env.FHIR_SERVER_URL,
     },
   });

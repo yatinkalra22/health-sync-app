@@ -25,9 +25,9 @@ export async function GET() {
     (health.services as Record<string, unknown>).elasticsearch = { status: 'not_configured (demo mode)' };
   }
 
-  // Check Anthropic
-  (health.services as Record<string, unknown>).anthropic = {
-    status: process.env.ANTHROPIC_API_KEY ? 'configured' : 'not_configured (demo mode)',
+  // Check Gemini AI
+  (health.services as Record<string, unknown>).gemini = {
+    status: process.env.GEMINI_API_KEY ? 'configured' : 'not_configured (demo mode)',
   };
 
   return NextResponse.json(health);

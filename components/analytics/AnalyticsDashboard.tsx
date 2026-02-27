@@ -91,7 +91,20 @@ function ESQLBadge({ query }: { query: string }) {
   );
 }
 
-export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
+export default function AnalyticsDashboard({ data: rawData }: { data: AnalyticsData }) {
+  // Defensive defaults to prevent "Cannot read properties of undefined" crashes
+  const data: AnalyticsData = {
+    total: rawData?.total ?? 0,
+    avg_confidence: rawData?.avg_confidence ?? 0,
+    avg_processing_time_hours: rawData?.avg_processing_time_hours ?? 0,
+    approval_rate: rawData?.approval_rate ?? 0,
+    status_breakdown: rawData?.status_breakdown ?? [],
+    payer_breakdown: rawData?.payer_breakdown ?? [],
+    urgency_breakdown: rawData?.urgency_breakdown ?? [],
+    processing_timeline: rawData?.processing_timeline ?? [],
+    agent_performance: rawData?.agent_performance ?? [],
+    data_source: rawData?.data_source ?? 'unknown',
+  };
   const kpis = [
     {
       label: 'Total PA Requests',

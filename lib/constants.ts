@@ -1,7 +1,7 @@
 // ---------------------
 // AI / LLM
 // ---------------------
-export const LLM_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514';
+export const LLM_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 export const LLM_DEFAULT_MAX_TOKENS = 4000;
 
 // ---------------------

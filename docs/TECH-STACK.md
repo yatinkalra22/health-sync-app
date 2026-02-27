@@ -20,7 +20,7 @@
 
 | Package              | Version  | Purpose                                    |
 |----------------------|----------|--------------------------------------------|
-| `@anthropic-ai/sdk`  | ^0.78.0  | Claude API for clinical/policy analysis   |
+| `@google/generative-ai` | ^0.24.1 | Gemini AI for clinical/policy analysis   |
 
 ## UI & Styling
 

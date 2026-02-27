@@ -2,7 +2,7 @@
 
 A multi-agent prior authorization (PA) automation system that reduces PA processing time from **2-7 days to 4-8 hours** through intelligent agent orchestration.
 
-Built with **Next.js 16**, **TypeScript**, **Elasticsearch** (ES|QL + Search), and **Claude AI** (Anthropic).
+Built with **Next.js 16**, **TypeScript**, **Elasticsearch** (ES|QL + Search), and **Gemini AI** (Google).
 
 ---
 
@@ -51,14 +51,14 @@ HealthSync uses Elasticsearch as both its data layer and analytics engine:
 
 ### Demo Mode (Default — No Setup Required)
 
-When Elasticsearch and Anthropic API keys are not configured, the app runs in demo mode with realistic sample PA requests covering different statuses. Agents use simulated processing that mirrors the real pipeline.
+When Elasticsearch and Gemini API keys are not configured, the app runs in demo mode with realistic sample PA requests covering different statuses. Agents use simulated processing that mirrors the real pipeline.
 
 ```bash
 npm run dev
 # That's it — open http://localhost:3000
 ```
 
-### Production Mode (Elasticsearch + Claude AI)
+### Production Mode (Elasticsearch + Gemini AI)
 
 For live Elasticsearch queries and AI-generated narratives:
 
@@ -107,7 +107,7 @@ cp .env.example .env
 |----------|-----------|-------------|
 | `ELASTICSEARCH_CLOUD_ID` | No | [Elastic Cloud](https://cloud.elastic.co/) > Deployment > Cloud ID. Leave empty for demo mode. |
 | `ELASTICSEARCH_API_KEY` | No | Elastic Cloud > Stack Management > API Keys. Leave empty for demo mode. |
-| `ANTHROPIC_API_KEY` | No | [Anthropic Console](https://console.anthropic.com/) > API Keys. Leave empty — agents fall back to generated text. |
+| `GEMINI_API_KEY` | No | [Google AI Studio](https://aistudio.google.com/apikey) > API Keys. Leave empty — agents fall back to generated text. |
 | `FHIR_SERVER_URL` | No | Only needed if running the FHIR Docker container. Defaults to `http://localhost:8080/fhir`. |
 | `NEXT_PUBLIC_APP_URL` | No | Defaults to `http://localhost:3000`. |
 
@@ -229,7 +229,7 @@ health-sync-app/
 │   ├── services/
 │   │   ├── elasticsearch.ts      # ES client + ES|QL helper + audit logging
 │   │   ├── fhir.ts               # FHIR server client
-│   │   └── llm.ts                # Anthropic Claude wrapper
+│   │   └── llm.ts                # Google Gemini wrapper
 │   ├── types/                    # TypeScript types (pa.ts, fhir.ts, agent.ts)
 │   ├── constants.ts              # All config (indices, statuses, payers, etc.)
 │   └── utils/cn.ts               # Tailwind class merge utility
@@ -263,7 +263,7 @@ health-sync-app/
 | `POST` | `/api/agents/execute` | Trigger agent processing for a PA |
 | `GET` | `/api/pa-updates/:id` | SSE stream for real-time PA status updates |
 | `GET` | `/api/analytics` | PA workflow analytics (ES|QL powered) |
-| `GET` | `/api/health` | Health check (ES, Anthropic, FHIR status) |
+| `GET` | `/api/health` | Health check (ES, Gemini, FHIR status) |
 
 All mutation endpoints use **Zod validation**. Status values: `submitted`, `processing`, `ready_for_review`, `hitl_required`, `approved`, `denied`, `failed`.
 
@@ -273,7 +273,7 @@ All mutation endpoints use **Zod validation**. Status values: `submitted`, `proc
 
 - **Multi-Agent Pipeline** — 5 specialized agents process PA requests end-to-end
 - **ES|QL Integration** — Agents use ES|QL for cross-index patient profiling and policy analytics
-- **Graceful Degradation** — Works without Elasticsearch, Anthropic, or FHIR; each service falls back independently
+- **Graceful Degradation** — Works without Elasticsearch, Gemini, or FHIR; each service falls back independently
 - **Analytics Dashboard** — Recharts visualizations: status distribution, payer breakdown, processing timeline, agent performance
 - **Audit Log Viewer** — HIPAA-compliant audit trail with PHI access filtering and ES|QL queries per event
 - **Demo Mode** — Full functionality without any external services
@@ -299,7 +299,7 @@ All mutation endpoints use **Zod validation**. Status values: `submitted`, `proc
 | Data Fetching | SWR (polling) + SSE (streaming) |
 | Validation | Zod |
 | Search & Storage | Elasticsearch 9.3+ (ES|QL, Search, Audit Logs) |
-| AI / LLM | Anthropic Claude (via `@anthropic-ai/sdk`) |
+| AI / LLM | Google Gemini (via `@google/generative-ai`) |
 | Healthcare | HAPI FHIR R4 Server (Docker) |
 | Charts | Recharts |
 | Icons | Lucide React |
@@ -331,8 +331,8 @@ npm run setup:es
 npm run setup:policies
 ```
 
-### Agents fail with "credit balance too low"
-The Anthropic API key has no credits. Agents will automatically fall back to generated text — the pipeline still completes successfully. To use real AI, add credits at https://console.anthropic.com/settings/plans.
+### Agents fail with API errors
+The Gemini API key may be invalid or have quota issues. Agents will automatically fall back to generated text — the pipeline still completes successfully. Get a free API key at https://aistudio.google.com/apikey.
 
 ### Docker / FHIR issues
 ```bash

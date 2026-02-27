@@ -33,14 +33,14 @@ const secondaryItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [mockMode, setMockMode] = useState<{ mock_mode: boolean; reason: string; services: { elasticsearch: boolean; anthropic: boolean; fhir: boolean } } | null>(null);
+  const [mockMode, setMockMode] = useState<{ mock_mode: boolean; reason: string; services: { elasticsearch: boolean; ai: boolean; fhir: boolean } } | null>(null);
 
   // Fetch mock mode status
   useEffect(() => {
     fetch('/api/mock-mode')
       .then(res => res.json())
       .then(setMockMode)
-      .catch(() => setMockMode({ mock_mode: true, reason: 'Unable to detect', services: { elasticsearch: false, anthropic: false, fhir: false } }));
+      .catch(() => setMockMode({ mock_mode: true, reason: 'Unable to detect', services: { elasticsearch: false, ai: false, fhir: false } }));
   }, []);
 
   // Close sidebar on route change (mobile)
@@ -181,11 +181,11 @@ export default function Sidebar() {
             </span>
             <span className={cn(
               'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium',
-              mockMode?.services.anthropic
+              mockMode?.services.ai
                 ? 'bg-emerald-500/10 text-emerald-400'
                 : 'bg-slate-700/50 text-slate-500'
             )}>
-              <div className={cn('w-1 h-1 rounded-full', mockMode?.services.anthropic ? 'bg-emerald-400' : 'bg-slate-600')} />
+              <div className={cn('w-1 h-1 rounded-full', mockMode?.services.ai ? 'bg-emerald-400' : 'bg-slate-600')} />
               AI
             </span>
             <span className={cn(
@@ -219,7 +219,7 @@ export default function Sidebar() {
           </span>
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-[10px] font-semibold text-blue-400">
             <Bot className="w-3 h-3" />
-            Claude AI
+            Gemini AI
           </span>
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-semibold text-cyan-400">
             <Zap className="w-3 h-3" />

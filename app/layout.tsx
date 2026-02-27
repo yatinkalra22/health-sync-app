@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "HealthSync APP - Prior Authorization Automation",
-  description: "Multi-agent AI system for healthcare prior authorization automation powered by Elasticsearch and Claude",
+  description: "Multi-agent AI system for healthcare prior authorization automation powered by Elasticsearch and Gemini AI",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

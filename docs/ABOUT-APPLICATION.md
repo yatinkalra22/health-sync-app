@@ -23,7 +23,7 @@ When a clinician submits a PA request, the agents process it end-to-end in minut
 - **ES|QL Query Inspector** — Every agent step and analytics chart shows the actual ES|QL queries it executed, making the Elasticsearch integration transparent
 - **HIPAA Audit Log Viewer** — Every agent action and PHI access is logged with expandable detail rows, ES|QL queries, and PHI-only filtering
 - **Next.js 16** with Server Components, Server Actions, SSE streaming, and SWR polling for real-time updates
-- **Claude AI** (Anthropic) generates medical necessity narratives and evaluates clinical evidence
+- **Gemini AI** (Google) generates medical necessity narratives and evaluates clinical evidence
 - **Demo mode** runs the entire pipeline without any external services — realistic clinical data, policy analysis, and compliance checks generated locally
 
 ### Why it matters
@@ -101,7 +101,7 @@ Prior authorization delays cause **real patient harm** — 94% of physicians rep
 🔍 ES|QL Query Inspector shows every agent query
 🛡️ HIPAA audit trail with PHI access tracking
 
-Built with #Elasticsearch, Next.js, and Claude AI.
+Built with #Elasticsearch, Next.js, and Gemini AI.
 
 #ElasticAgentHackathon #HealthTech
 

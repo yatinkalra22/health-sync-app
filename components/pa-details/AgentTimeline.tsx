@@ -74,26 +74,17 @@ export default function AgentTimeline({ executionLog, streaming = false, onStrea
   const [completedCount, setCompletedCount] = useState(streaming ? 0 : Infinity);
   const firstEsqlAutoExpanded = React.useRef(false);
 
-  if (!executionLog || executionLog.length === 0) {
-    return (
-      <div className="glass-card rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-800 mb-4">Agent Workflow</h3>
-        <div className="text-center py-8 text-slate-400 text-sm">
-          No execution data available yet
-        </div>
-      </div>
-    );
-  }
-
   const stepMap = new Map<string, ExecutionLogEntry>();
-  for (const entry of executionLog) {
-    stepMap.set(entry.step, entry);
+  if (executionLog) {
+    for (const entry of executionLog) {
+      stepMap.set(entry.step, entry);
+    }
   }
   const steps = Array.from(stepMap.values());
 
   // Streaming animation: reveal steps one by one
   React.useEffect(() => {
-    if (!streaming) return;
+    if (!streaming || steps.length === 0) return;
 
     let stepIndex = 0;
     let cancelled = false;
@@ -126,6 +117,17 @@ export default function AgentTimeline({ executionLog, streaming = false, onStrea
     const timer = setTimeout(() => revealNext(), 400);
     return () => { cancelled = true; clearTimeout(timer); };
   }, [streaming, steps.length, onStreamingComplete]);
+
+  if (steps.length === 0) {
+    return (
+      <div className="glass-card rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-800 mb-4">Agent Workflow</h3>
+        <div className="text-center py-8 text-slate-400 text-sm">
+          No execution data available yet
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-card rounded-xl p-6">

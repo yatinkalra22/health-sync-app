@@ -5,7 +5,7 @@
 | Mode | Mock Mode | Production Mode |
 |------|-----------|-----------------|
 | **Data** | In-memory demo data (6 PA requests) | Elasticsearch (live) |
-| **AI Agents** | Simulated pipeline | Claude AI (Anthropic API) |
+| **AI Agents** | Simulated pipeline | Gemini AI (Google API) |
 | **FHIR** | Not used | Docker HAPI FHIR R4 |
 | **Setup** | Zero config | ES + API keys required |
 | **Toggle** | `NEXT_PUBLIC_MOCK_MODE=true` | `NEXT_PUBLIC_MOCK_MODE=false` |
@@ -71,12 +71,12 @@ The in-memory store resets on every server restart. This is intentional — it e
 
 ## 2. Running in Production Mode
 
-Production mode connects to real Elasticsearch, Claude AI, and optionally a FHIR server.
+Production mode connects to real Elasticsearch, Gemini AI, and optionally a FHIR server.
 
 ### Prerequisites
 
 - **Elasticsearch** cloud deployment (or self-hosted with ES|QL support)
-- **Anthropic API key** (for Claude AI agent processing)
+- **Gemini API key** (for Google Gemini AI agent processing)
 - **Docker** (optional, for FHIR server)
 
 ### Configure Environment
@@ -89,8 +89,8 @@ NEXT_PUBLIC_MOCK_MODE=false
 ELASTICSEARCH_CLOUD_ID=your-cloud-id
 ELASTICSEARCH_API_KEY=your-api-key
 
-# Anthropic Claude AI (required for live agent processing)
-ANTHROPIC_API_KEY=sk-ant-...
+# Google Gemini AI (required for live agent processing)
+GEMINI_API_KEY=your-gemini-api-key
 
 # FHIR Server (optional)
 FHIR_SERVER_URL=http://localhost:8080/fhir
@@ -175,7 +175,7 @@ The app determines its mode using this priority:
 The sidebar shows the current mode with service connection status:
 - **Mock Mode** (amber): In-memory demo data, no external services
 - **Production Mode** (green): Connected to live services
-- Service dots: ES (Elasticsearch), AI (Anthropic), FHIR indicators
+- Service dots: ES (Elasticsearch), AI (Gemini), FHIR indicators
 
 ### API Endpoint
 
@@ -192,7 +192,7 @@ Response:
   "reason": "NEXT_PUBLIC_MOCK_MODE=true",
   "services": {
     "elasticsearch": false,
-    "anthropic": false,
+    "ai": false,
     "fhir": true
   }
 }
@@ -228,7 +228,7 @@ Response:
 
 ### Demo with Live Services
 
-For demos with real data, set `NEXT_PUBLIC_MOCK_MODE=false` and ensure Elasticsearch + Anthropic API are configured. The agents will make real LLM calls and query actual data.
+For demos with real data, set `NEXT_PUBLIC_MOCK_MODE=false` and ensure Elasticsearch + Gemini API are configured. The agents will make real LLM calls and query actual data.
 
 ---
 
@@ -309,7 +309,7 @@ This verifies connectivity to:
 | `NEXT_PUBLIC_MOCK_MODE` | No | Auto-detect | `true` / `false` / empty |
 | `ELASTICSEARCH_CLOUD_ID` | Production | — | Elasticsearch Cloud ID |
 | `ELASTICSEARCH_API_KEY` | Production | — | Elasticsearch API key |
-| `ANTHROPIC_API_KEY` | Production | — | Claude AI API key |
+| `GEMINI_API_KEY` | Production | — | Gemini AI API key |
 | `FHIR_SERVER_URL` | No | `http://localhost:8080/fhir` | HAPI FHIR server URL |
 | `NEXT_PUBLIC_APP_URL` | No | `http://localhost:3000` | App base URL |
 

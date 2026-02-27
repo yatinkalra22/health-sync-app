@@ -1,49 +1,61 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { LLM_MODEL, LLM_DEFAULT_MAX_TOKENS } from '@/lib/constants';
+
+interface MessageParam {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 export abstract class BaseAgent {
   protected name: string;
   protected description: string;
-  protected llm: Anthropic | null;
-  protected conversationHistory: Anthropic.MessageParam[] = [];
+  protected genAI: GoogleGenerativeAI | null;
+  protected conversationHistory: MessageParam[] = [];
 
   constructor(name: string, description: string) {
     this.name = name;
     this.description = description;
-    this.llm = process.env.ANTHROPIC_API_KEY
-      ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    this.genAI = process.env.GEMINI_API_KEY
+      ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
       : null;
   }
 
   abstract execute(context: unknown): Promise<unknown>;
 
   protected async callLLM(
-    messages: Anthropic.MessageParam[],
+    messages: MessageParam[],
     systemPrompt?: string,
     maxTokens = LLM_DEFAULT_MAX_TOKENS
   ): Promise<string> {
-    if (!this.llm) {
-      return `[Demo] ${this.name} analysis would appear here with a configured Anthropic API key.`;
+    if (!this.genAI) {
+      return `[Demo] ${this.name} analysis would appear here with a configured Gemini API key.`;
     }
 
     try {
-      const response = await this.llm.messages.create({
+      const model = this.genAI.getGenerativeModel({
         model: LLM_MODEL,
-        max_tokens: maxTokens,
-        system: systemPrompt || this.description,
-        messages,
+        systemInstruction: systemPrompt || this.description,
+        generationConfig: { maxOutputTokens: maxTokens },
       });
 
-      const content = response.content[0];
-      if (content.type === 'text') {
-        this.conversationHistory.push({
-          role: 'assistant',
-          content: content.text,
-        });
-        return content.text;
-      }
+      // Convert messages to Gemini format
+      const history = messages.slice(0, -1).map(m => ({
+        role: m.role === 'assistant' ? 'model' as const : 'user' as const,
+        parts: [{ text: m.content }],
+      }));
 
-      return '';
+      const lastMessage = messages[messages.length - 1];
+
+      const chat = model.startChat({ history });
+      const result = await chat.sendMessage(lastMessage.content);
+      const text = result.response.text();
+
+      this.conversationHistory.push({
+        role: 'assistant',
+        content: text,
+      });
+
+      return text;
     } catch (error) {
       console.error(`LLM call failed for ${this.name}:`, error);
       return `[AI Analysis by ${this.name}] Based on the clinical data and policy requirements, this case has been evaluated. The patient's medical history, current conditions, and treatment plan have been reviewed against applicable payer coverage criteria. Further details are available in the structured data sections.`;
