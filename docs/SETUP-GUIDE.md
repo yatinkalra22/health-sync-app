@@ -1,4 +1,4 @@
-# HealthSync APP - Setup & Running Guide
+# HealthSync APP — Setup & Running Guide
 
 ## Prerequisites
 
@@ -110,58 +110,21 @@ npm run dev
 
 ---
 
-## Available Scripts
-
-| Command                | Description                                 |
-|------------------------|---------------------------------------------|
-| `npm run dev`          | Start Next.js dev server (port 3000)        |
-| `npm run build`        | Production build                            |
-| `npm run start`        | Start production server                     |
-| `npm run lint`         | Run ESLint                                  |
-| `npm run setup:es`     | Create Elasticsearch indices                |
-| `npm run setup:policies` | Seed sample payer policies               |
-| `npm run health-check` | Verify all service connections              |
-
----
-
-## What Needs to Be Done to Run Smoothly
-
-### Required Changes
-
-1. **Set environment variables** - Copy `.env.example` to `.env` and add your Elasticsearch Cloud ID, API key, and Gemini API key. Without these, the app runs in demo mode with mock data.
-
-2. **Elasticsearch Cloud deployment** - Create a deployment at [cloud.elastic.co](https://cloud.elastic.co):
-   - Name: `healthsync-ai-dev`
-   - Version: 9.3+
-   - Size: 4GB RAM (free trial)
-   - Copy the Cloud ID and create an API key
-
-3. **Run index setup** - After configuring Elasticsearch, run `npm run setup:es` to create all 7 indices, then `npm run setup:policies` to seed sample coverage policies.
-
-4. **Gemini API key** - Get from [aistudio.google.com/apikey](https://aistudio.google.com/apikey). The Gemini 2.0 Flash model is used for clinical summaries, policy analysis, and PA packet generation.
-
-### Optional Setup
-
-5. **FHIR Server** - Only needed if you want to load real synthetic patient data:
-   - Run `docker-compose up -d` to start HAPI FHIR + PostgreSQL
-   - Use Synthea to generate patient bundles
-   - Load into FHIR server, then index into Elasticsearch
-
-6. **Vercel Deployment** - Connect repo to Vercel, add env vars in Vercel dashboard, deploy.
-
-### Feature Completeness Without Services
+## Feature Completeness by Mode
 
 | Feature                        | Demo Mode | Full Mode |
 |--------------------------------|-----------|-----------|
-| Dashboard with PA list         | Yes       | Yes       |
-| PA detail with clinical data   | Yes       | Yes       |
-| New PA form submission         | Yes       | Yes       |
-| Real-time status updates (SSE) | Yes       | Yes       |
-| Agent workflow visualization   | Yes       | Yes       |
-| AI clinical summaries          | Mock text | Real AI   |
-| AI policy analysis             | Mock text | Real AI   |
-| Elasticsearch queries          | In-memory | Real ES   |
-| FHIR patient data loading      | No        | Yes       |
+| Dashboard with PA list         | ✅        | ✅        |
+| PA detail with clinical data   | ✅        | ✅        |
+| New PA form submission         | ✅        | ✅        |
+| Real-time status updates (SSE) | ✅        | ✅        |
+| Agent workflow + ES\|QL viewer  | ✅        | ✅        |
+| AI clinical summaries          | Simulated | Real AI   |
+| AI policy analysis             | Simulated | Real AI   |
+| Elasticsearch queries          | In-memory | Live ES   |
+| FHIR patient data              | ❌        | ✅        |
+
+> For full demo walkthrough and API testing, see [Testing & Demo Guide](TESTING-AND-DEMO.md).
 
 ---
 

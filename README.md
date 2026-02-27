@@ -1,6 +1,6 @@
-# HealthSync APP
+# HealthSync APP — Multi-Agent Prior Authorization Automation
 
-A multi-agent prior authorization (PA) automation system that reduces PA processing time from **2-7 days to 4-8 hours** through intelligent agent orchestration.
+A multi-agent prior authorization (PA) automation system that reduces PA processing time from **days to minutes** through intelligent agent orchestration.
 
 Built with **Next.js 16**, **TypeScript**, **Elasticsearch** (ES|QL + Search), and **Gemini AI** (Google).
 
@@ -18,6 +18,17 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000) — the app runs fully in **demo mode** with no configuration needed.
 
 Click a **Quick Demo Scenario** on the dashboard, then click **Run AI Agents** to see the 5-agent pipeline in action.
+
+---
+
+## 📚 Documentation
+
+| Doc | Description |
+|-----|-------------|
+| [Architecture](docs/ARCHITECTURE.md) | System design, agent workflow, data flow, Elasticsearch indices |
+| [Tech Stack](docs/TECH-STACK.md) | Full dependency list with versions and purpose |
+| [Setup Guide](docs/SETUP-GUIDE.md) | Step-by-step setup for Elasticsearch, Gemini AI, and FHIR |
+| [Testing & Demo](docs/TESTING-AND-DEMO.md) | Mock mode vs production mode, demo walkthrough, API testing |
 
 ---
 
@@ -112,58 +123,6 @@ cp .env.example .env
 | `NEXT_PUBLIC_APP_URL` | No | Defaults to `http://localhost:3000`. |
 
 **All variables are optional.** The app gracefully falls back to demo mode for any unconfigured service.
-
----
-
-## Docker — FHIR Server
-
-The `docker-compose.yml` runs a **HAPI FHIR R4 server** backed by PostgreSQL. This is **optional** — the app works fully without it.
-
-**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop) must be installed and running.
-
-```bash
-# Start FHIR server + database
-docker compose up -d
-
-# Check status
-docker ps
-
-# View logs if something goes wrong
-docker logs healthsync-fhir
-
-# Verify FHIR server is ready (~2 minutes to initialize)
-curl http://localhost:8080/fhir/metadata
-```
-
-**What it provides:**
-- **HAPI FHIR Server** on port `8080` — Industry-standard FHIR R4 compliant server
-- **PostgreSQL 14** database — Persists FHIR data in a Docker volume
-
-**Loading test patient data:**
-
-```bash
-# Load FHIR bundles into the server
-npm run load:fhir-data
-
-# Index FHIR data into Elasticsearch (requires ES credentials in .env)
-npm run index:fhir
-```
-
-**Troubleshooting Docker:**
-
-```bash
-# FHIR server won't start
-docker compose down && docker compose up -d
-docker logs healthsync-fhir
-
-# Port 8080 already in use
-lsof -i :8080                  # Find what's using it
-docker compose down && docker compose up -d
-
-# Reset everything
-docker compose down -v         # Deletes all data
-docker compose up -d
-```
 
 ---
 
