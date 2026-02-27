@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -157,15 +157,6 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
   const processingEntry = processingPAs.get(pa.pa_id);
   const overlayElapsed = processingEntry?.elapsed ?? 0;
 
-  useEffect(() => {
-    if (!isInFlight) return;
-    // Poll for completion when overlay is showing
-    const interval = setInterval(() => {
-      router.refresh();
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [isInFlight, router]);
-
   const handleStreamingComplete = useCallback(() => {
     setStreamingLog(null);
     setActionLoading(null);
@@ -210,6 +201,24 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
       setActionLoading(null);
     }
   }, [pa, router, startProcessing, finishProcessing]);
+
+  // Auto-start processing when a freshly-submitted PA is opened
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (pa.status === 'submitted' && !isInFlight && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      handleProcess();
+    }
+  }, [pa.status, isInFlight, handleProcess]);
+
+  // Poll for completion when overlay is showing
+  useEffect(() => {
+    if (!isInFlight) return;
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isInFlight, router]);
 
   const handleApprove = async () => {
     setActionLoading('approve');

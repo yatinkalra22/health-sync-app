@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { PAYERS, COMMON_PROCEDURES, PA_URGENCY_OPTIONS } from '@/lib/constants';
+import { createPARequest } from '@/actions/pa-actions';
 
 export default function NewPAForm() {
   const router = useRouter();
@@ -37,24 +38,22 @@ export default function NewPAForm() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/pa-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          diagnosis_codes: formData.diagnosis_codes.split(',').map(c => c.trim()).filter(Boolean),
-        }),
-      });
+      const fd = new FormData();
+      fd.append('patient_id', formData.patient_id);
+      fd.append('procedure_code', formData.procedure_code);
+      fd.append('diagnosis_codes', formData.diagnosis_codes);
+      fd.append('payer', formData.payer);
+      fd.append('urgency', formData.urgency);
+      if (formData.clinician_id) fd.append('clinician_id', formData.clinician_id);
+      if (formData.notes) fd.append('notes', formData.notes);
 
-      if (response.ok) {
-        setIsSuccess(true);
-        setTimeout(() => {
-          router.push('/');
-        }, 1500);
-      }
+      const paId = await createPARequest(fd);
+      setIsSuccess(true);
+      setTimeout(() => {
+        router.push(`/pa/${paId}`);
+      }, 1000);
     } catch (error) {
       console.error('Failed to create PA:', error);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -79,8 +78,8 @@ export default function NewPAForm() {
           <CheckCircle2 className="w-10 h-10 text-emerald-500" />
         </motion.div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">PA Request Submitted!</h2>
-        <p className="text-slate-500 mb-2">AI agents are now processing your request.</p>
-        <p className="text-sm text-slate-400">Redirecting to dashboard...</p>
+        <p className="text-slate-500 mb-2">Opening request for AI agent processing...</p>
+        <p className="text-sm text-slate-400">Redirecting...</p>
       </motion.div>
     );
   }
