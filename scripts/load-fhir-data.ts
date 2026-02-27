@@ -88,7 +88,7 @@ async function main() {
 
   if (!bundleDir) {
     console.log('========================================');
-    console.log('  HealthSync AI - Load FHIR Data');
+    console.log('  HealthSync APP - Load FHIR Data');
     console.log('========================================\n');
     console.log('Usage: npm run load:fhir-data -- <path-to-synthea-output>\n');
     console.log('Steps to generate test data:');
@@ -116,7 +116,7 @@ async function main() {
   }
 
   console.log('========================================');
-  console.log('  HealthSync AI - Load FHIR Data');
+  console.log('  HealthSync APP - Load FHIR Data');
   console.log('========================================\n');
 
   await waitForServer();

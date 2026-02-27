@@ -1,8 +1,8 @@
-# HealthSync AI - System Architecture
+# HealthSync APP - System Architecture
 
 ## Executive Summary
 
-HealthSync AI is a multi-agent prior authorization (PA) automation system that reduces PA processing time from 2-7 days to 4-8 hours through intelligent agent orchestration. Built as a full-stack Next.js application with Elasticsearch for search/storage and Claude AI for clinical analysis.
+HealthSync APP is a multi-agent prior authorization (PA) automation system that reduces PA processing time from 2-7 days to 4-8 hours through intelligent agent orchestration. Built as a full-stack Next.js application with Elasticsearch for search/storage and Claude AI for clinical analysis.
 
 ---
 

@@ -1,10 +1,10 @@
-# HealthSync AI - Elasticsearch Agent Builder Hackathon Submission
+# HealthSync APP - Elasticsearch Agent Builder Hackathon Submission
 
 ## Devpost Description (~400 words)
 
 ### What it does
 
-HealthSync AI automates prior authorization (PA) — healthcare's most expensive administrative process, costing **$150 billion annually** in the US alone. Clinicians spend an average of 13 hours per week on PA paperwork instead of treating patients.
+HealthSync APP automates prior authorization (PA) — healthcare's most expensive administrative process, costing **$150 billion annually** in the US alone. Clinicians spend an average of 13 hours per week on PA paperwork instead of treating patients.
 
 HealthSync replaces that manual workflow with **5 specialized AI agents** orchestrated through Elasticsearch:
 
@@ -42,7 +42,7 @@ Prior authorization delays cause **real patient harm** — 94% of physicians rep
 ## Demo Video Script (3 minutes)
 
 ### Opening (0:00–0:20)
-"Prior authorization costs US healthcare $150 billion a year. Clinicians spend 13 hours per week on paperwork instead of treating patients. HealthSync AI fixes this with Elasticsearch-powered AI agents."
+"Prior authorization costs US healthcare $150 billion a year. Clinicians spend 13 hours per week on paperwork instead of treating patients. HealthSync APP fixes this with Elasticsearch-powered AI agents."
 
 ### Dashboard Overview (0:20–0:50)
 - Show the PA Dashboard with 6 requests in different statuses
@@ -83,7 +83,7 @@ Prior authorization delays cause **real patient harm** — 94% of physicians rep
 - "Full HIPAA-compliant audit trail — every PHI access is logged with the exact query that ran"
 
 ### Closing (2:55–3:00)
-"HealthSync AI: 5 agents, 8 Elasticsearch indices, ES|QL-powered analytics, HIPAA audit trail, and end-to-end PA processing. From days to minutes."
+"HealthSync APP: 5 agents, 8 Elasticsearch indices, ES|QL-powered analytics, HIPAA audit trail, and end-to-end PA processing. From days to minutes."
 
 ---
 
@@ -91,7 +91,7 @@ Prior authorization delays cause **real patient harm** — 94% of physicians rep
 
 **For Twitter/X:**
 
-🏥 Built HealthSync AI for the @elastic Agent Builder Hackathon!
+🏥 Built HealthSync APP for the @elastic Agent Builder Hackathon!
 
 5 AI agents automate prior authorization — healthcare's $150B paperwork problem.
 

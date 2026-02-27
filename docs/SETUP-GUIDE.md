@@ -1,4 +1,4 @@
-# HealthSync AI - Setup & Running Guide
+# HealthSync APP - Setup & Running Guide
 
 ## Prerequisites
 
@@ -89,7 +89,7 @@ npm run health-check
 Expected output:
 ```
 ========================================
-  HealthSync AI System Health Check
+  HealthSync APP System Health Check
 ========================================
 
 Services:

@@ -1,4 +1,4 @@
-# HealthSync AI - Technology Stack
+# HealthSync APP - Technology Stack
 
 ## Core Framework
 

@@ -69,7 +69,7 @@ function checkAnthropicAPI() {
 
 async function main() {
   console.log('========================================');
-  console.log('  HealthSync AI System Health Check');
+  console.log('  HealthSync APP System Health Check');
   console.log('========================================\n');
 
   console.log('Services:');

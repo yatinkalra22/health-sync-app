@@ -249,7 +249,7 @@ export default function Sidebar() {
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
             <Heart className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="font-bold text-sm">HealthSync AI</span>
+          <span className="font-bold text-sm">HealthSync APP</span>
         </Link>
         <div className="w-9" /> {/* spacer for centering */}
       </div>

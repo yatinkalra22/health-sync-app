@@ -11,7 +11,7 @@ export default function Loading() {
           <div className="h-2 shimmer rounded-full" />
           <div className="h-2 shimmer rounded-full w-3/4 mx-auto" />
         </div>
-        <p className="text-xs text-slate-400 mt-4">Loading HealthSync AI...</p>
+        <p className="text-xs text-slate-400 mt-4">Loading HealthSync APP...</p>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-# HealthSync AI
+# HealthSync APP
 
 A multi-agent prior authorization (PA) automation system that reduces PA processing time from **2-7 days to 4-8 hours** through intelligent agent orchestration.
 
@@ -6,15 +6,30 @@ Built with **Next.js 16**, **TypeScript**, **Elasticsearch** (ES|QL + Search), a
 
 ---
 
+## Quick Start (2 minutes)
+
+```bash
+git clone https://github.com/yatinkalra22/health-sync-app.git
+cd health-sync-app
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) — the app runs fully in **demo mode** with no configuration needed.
+
+Click a **Quick Demo Scenario** on the dashboard, then click **Run AI Agents** to see the 5-agent pipeline in action.
+
+---
+
 ## What It Does
 
-Prior authorization is healthcare's biggest administrative bottleneck - costing **$150B annually** in the US. HealthSync AI automates the entire PA workflow using 5 specialized AI agents:
+Prior authorization is healthcare's biggest administrative bottleneck — costing **$150B annually** in the US. HealthSync APP automates the entire PA workflow using 5 specialized AI agents:
 
-1. **Coordinator Agent** - Orchestrates the full PA pipeline, manages state, and writes audit logs for every PHI access
-2. **Clinical Data Gatherer** - Queries FHIR patient data from Elasticsearch using **ES|QL** aggregations across conditions, medications, procedures, and observations
-3. **Policy Analyzer** - Searches payer policy documents using **ES|QL stats** and hybrid search to match coverage criteria
-4. **Documentation Assembler** - Generates structured PA packets with medical necessity narratives
-5. **Compliance Validator** - Validates CMS timeline compliance (72h expedited / 7-day standard), documentation completeness, and flags cases for human review
+1. **Coordinator Agent** — Orchestrates the full PA pipeline, manages state, and writes audit logs for every PHI access
+2. **Clinical Data Gatherer** — Queries FHIR patient data from Elasticsearch using **ES|QL** aggregations across conditions, medications, procedures, and observations
+3. **Policy Analyzer** — Searches payer policy documents using **ES|QL stats** and hybrid search to match coverage criteria
+4. **Documentation Assembler** — Generates structured PA packets with medical necessity narratives
+5. **Compliance Validator** — Validates CMS timeline compliance (72h expedited / 7-day standard), documentation completeness, and flags cases for human review
 
 When a clinician submits a PA request, the agents run in sequence, and the result is either auto-approved or escalated to a human reviewer (HITL) with full reasoning visible.
 
@@ -24,202 +39,130 @@ When a clinician submits a PA request, the agents run in sequence, and the resul
 
 HealthSync uses Elasticsearch as both its data layer and analytics engine:
 
-- **ES|QL Queries** - ClinicalDataGatherer uses `FROM ... | WHERE ... | STATS` to aggregate patient clinical profiles across indices. PolicyAnalyzer uses ES|QL for payer policy statistics.
-- **Search** - Hybrid keyword + term search on payer policies (`bool` queries with `must`/`should` clauses)
-- **ES|QL Analytics** - The analytics dashboard is powered by ES|QL queries (`STATS COUNT(*) BY status`, `AVG(compliance_score)`, etc.)
-- **8 Indices** - patients, conditions, medications, procedures, observations, pa-requests, policies, audit-logs
-- **Audit Logging** - Every agent action and PHI access is logged to `healthsync-audit-logs` with timestamps, duration, and compliance metadata
+- **ES|QL Queries** — ClinicalDataGatherer uses `FROM ... | WHERE ... | STATS` to aggregate patient clinical profiles across indices. PolicyAnalyzer uses ES|QL for payer policy statistics.
+- **Search** — Hybrid keyword + term search on payer policies (`bool` queries with `must`/`should` clauses)
+- **ES|QL Analytics** — The analytics dashboard is powered by ES|QL queries (`STATS COUNT(*) BY status`, `AVG(compliance_score)`, etc.)
+- **8 Indices** — patients, conditions, medications, procedures, observations, pa-requests, policies, audit-logs
+- **Audit Logging** — Every agent action and PHI access is logged to `healthsync-audit-logs` with timestamps, duration, and compliance metadata
 
 ---
 
-## Demo Mode
+## Running Modes
 
-The app works **fully without any external services**. When Elasticsearch and Anthropic API keys are not configured, it runs in demo mode with 6 realistic sample PA requests covering different statuses (submitted, processing, ready for review, HITL required, approved, denied).
+### Demo Mode (Default — No Setup Required)
 
----
-
-## Getting Started
-
-### Prerequisites
-
-- **Node.js** v20+ ([download](https://nodejs.org/))
-- **npm** v10+ (comes with Node.js)
-- **Docker** (optional, only for FHIR server) ([download](https://www.docker.com/products/docker-desktop))
-
-### 1. Install Dependencies
-
-```bash
-git clone <your-repo-url>
-cd health-sync-app
-npm install
-```
-
-### 2. Configure Environment Variables
-
-Copy the example file and fill in your credentials:
-
-```bash
-cp .env.example .env.local
-```
-
-```bash
-# Elasticsearch (leave empty for demo mode)
-ELASTICSEARCH_CLOUD_ID=
-ELASTICSEARCH_API_KEY=
-
-# Anthropic Claude AI (leave empty for demo mode)
-ANTHROPIC_API_KEY=
-
-# FHIR Server (optional, only if running Docker)
-FHIR_SERVER_URL=http://localhost:8080/fhir
-
-# App URL
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-| Variable | Required? | Where to Get It |
-|----------|-----------|-----------------|
-| `ELASTICSEARCH_CLOUD_ID` | No (demo mode) | [Elastic Cloud](https://cloud.elastic.co/) > Deployment > Cloud ID |
-| `ELASTICSEARCH_API_KEY` | No (demo mode) | Elastic Cloud > Stack Management > API Keys |
-| `ANTHROPIC_API_KEY` | No (demo mode) | [Anthropic Console](https://console.anthropic.com/) > API Keys |
-| `FHIR_SERVER_URL` | No | Only needed if running the FHIR Docker container |
-| `NEXT_PUBLIC_APP_URL` | No | Defaults to `http://localhost:3000` |
-
-### 3. Run the App
+When Elasticsearch and Anthropic API keys are not configured, the app runs in demo mode with realistic sample PA requests covering different statuses. Agents use simulated processing that mirrors the real pipeline.
 
 ```bash
 npm run dev
+# That's it — open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) - you'll see the PA Dashboard with demo data.
+### Production Mode (Elasticsearch + Claude AI)
 
-### 4. Production Build
+For live Elasticsearch queries and AI-generated narratives:
 
 ```bash
-npm run build
-npm start
+cp .env.example .env
+# Edit .env with your credentials (see Environment Variables below)
+npm run setup:es          # Create 8 Elasticsearch indices
+npm run setup:policies    # Seed sample payer policies
+npm run dev
+```
+
+### With FHIR Server (Optional)
+
+The FHIR server is only needed if you want to load real FHIR patient data. The app works fully without it.
+
+```bash
+# Requires Docker Desktop to be running
+docker compose up -d
+
+# Wait ~2 minutes for initialization, then verify
+curl http://localhost:8080/fhir/metadata
+
+# Load synthetic patient data (requires Java for Synthea)
+npm run load:fhir-data
+npm run index:fhir
+```
+
+To stop the FHIR server:
+
+```bash
+docker compose down        # Stop containers (data persists)
+docker compose down -v     # Stop and delete all data
 ```
 
 ---
 
-## Docker - FHIR Server (Optional)
+## Environment Variables
 
-The `docker-compose.yml` runs a **HAPI FHIR R4 server** backed by PostgreSQL. This is only needed for local development if you want to work with real FHIR patient data. The app works fully without it.
+Copy `.env.example` to `.env` and fill in your credentials:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Required? | Description |
+|----------|-----------|-------------|
+| `ELASTICSEARCH_CLOUD_ID` | No | [Elastic Cloud](https://cloud.elastic.co/) > Deployment > Cloud ID. Leave empty for demo mode. |
+| `ELASTICSEARCH_API_KEY` | No | Elastic Cloud > Stack Management > API Keys. Leave empty for demo mode. |
+| `ANTHROPIC_API_KEY` | No | [Anthropic Console](https://console.anthropic.com/) > API Keys. Leave empty — agents fall back to generated text. |
+| `FHIR_SERVER_URL` | No | Only needed if running the FHIR Docker container. Defaults to `http://localhost:8080/fhir`. |
+| `NEXT_PUBLIC_APP_URL` | No | Defaults to `http://localhost:3000`. |
+
+**All variables are optional.** The app gracefully falls back to demo mode for any unconfigured service.
+
+---
+
+## Docker — FHIR Server
+
+The `docker-compose.yml` runs a **HAPI FHIR R4 server** backed by PostgreSQL. This is **optional** — the app works fully without it.
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop) must be installed and running.
 
 ```bash
 # Start FHIR server + database
-docker-compose up -d
+docker compose up -d
 
-# Wait ~2 minutes for it to initialize, then verify
+# Check status
+docker ps
+
+# View logs if something goes wrong
+docker logs healthsync-fhir
+
+# Verify FHIR server is ready (~2 minutes to initialize)
 curl http://localhost:8080/fhir/metadata
 ```
 
 **What it provides:**
-- **HAPI FHIR Server** on port `8080` - Industry-standard FHIR R4 compliant server
-- **PostgreSQL 14** database - Persists FHIR data in a Docker volume
+- **HAPI FHIR Server** on port `8080` — Industry-standard FHIR R4 compliant server
+- **PostgreSQL 14** database — Persists FHIR data in a Docker volume
 
-**Docker credentials** use environment variables with defaults (`admin/admin`). For production, set these in your environment:
-
-```bash
-FHIR_DB_NAME=hapi
-FHIR_DB_USER=admin
-FHIR_DB_PASSWORD=admin
-```
-
-**Loading test patient data** (optional):
-
-Use [Synthea](https://github.com/synthetichealth/synthea) to generate synthetic FHIR patient bundles, then load them into the FHIR server and index into Elasticsearch:
+**Loading test patient data:**
 
 ```bash
-# 1. Generate synthetic patients (requires Java)
-java -jar synthea-with-dependencies.jar -p 10
+# Load FHIR bundles into the server
+npm run load:fhir-data
 
-# 2. Load bundles into the FHIR server
-npm run load:fhir-data -- ./output/fhir
-
-# 3. Index FHIR data into Elasticsearch (requires ES credentials)
+# Index FHIR data into Elasticsearch (requires ES credentials in .env)
 npm run index:fhir
 ```
 
-To stop:
+**Troubleshooting Docker:**
 
 ```bash
-docker-compose down        # Stop containers (data persists)
-docker-compose down -v     # Stop and delete data volume
-```
+# FHIR server won't start
+docker compose down && docker compose up -d
+docker logs healthsync-fhir
 
----
+# Port 8080 already in use
+lsof -i :8080                  # Find what's using it
+docker compose down && docker compose up -d
 
-## Project Structure
-
-```
-health-sync-app/
-├── app/                          # Next.js App Router
-│   ├── page.tsx                  # Dashboard (Server Component)
-│   ├── layout.tsx                # Root layout with sidebar
-│   ├── new/page.tsx              # New PA submission form
-│   ├── analytics/page.tsx        # Analytics dashboard with Recharts
-│   ├── audit/page.tsx            # HIPAA audit log viewer
-│   ├── pa/[id]/page.tsx          # PA detail view
-│   ├── error.tsx                 # Error boundary
-│   ├── global-error.tsx          # Global error boundary
-│   ├── not-found.tsx             # 404 page
-│   ├── loading.tsx               # Loading state
-│   └── api/
-│       ├── pa-requests/          # GET, POST PA requests
-│       ├── pa-requests/[id]/     # GET, PATCH individual PA
-│       ├── pa-updates/[id]/      # SSE real-time updates
-│       ├── agents/execute/       # POST trigger agent processing
-│       ├── analytics/            # GET PA analytics (ES|QL powered)
-│       └── health/               # Health check endpoint
-│
-├── components/
-│   ├── dashboard/                # PADashboard, PARequestCard, MetricsSummary
-│   ├── pa-details/               # PADetailView, PatientInfo, ClinicalDataPanel,
-│   │                               PolicyAnalysisPanel, PAPacketPanel, AgentTimeline
-│   ├── analytics/                # AnalyticsDashboard (Recharts charts)
-│   ├── audit/                    # AuditLogViewer (HIPAA audit trail)
-│   ├── forms/                    # NewPAForm
-│   └── ui/                       # Sidebar, StatusBadge, ConfidenceRing
-│
-├── lib/
-│   ├── agents/                   # AI agent implementations
-│   │   ├── BaseAgent.ts          # Abstract base with LLM integration
-│   │   ├── CoordinatorAgent.ts   # Workflow orchestrator + audit logging
-│   │   ├── ClinicalDataGatherer.ts  # ES|QL patient profile queries
-│   │   ├── PolicyAnalyzer.ts     # ES|QL policy stats + hybrid search
-│   │   ├── DocumentationAssembler.ts
-│   │   └── ComplianceValidator.ts
-│   ├── services/                 # External service clients
-│   │   ├── elasticsearch.ts      # ES client + ES|QL helper + audit logging
-│   │   ├── fhir.ts               # FHIR server client
-│   │   └── llm.ts                # Anthropic Claude wrapper
-│   ├── types/                    # TypeScript types (pa.ts, fhir.ts, agent.ts)
-│   ├── constants.ts              # All config constants (indices, statuses, etc.)
-│   ├── demo-data.ts              # 6 sample PA requests for demo mode
-│   └── utils/cn.ts               # Tailwind class merge utility
-│
-├── actions/                      # Server Actions
-│   ├── pa-actions.ts             # Create, approve, deny PA requests
-│   └── agent-actions.ts          # Trigger agent processing
-│
-├── hooks/                        # React hooks
-│   ├── usePARequests.ts          # SWR-based PA data fetching
-│   ├── useRealTimeUpdates.ts     # SSE hook for live updates
-│   └── useAgentStatus.ts         # Agent execution status hook
-│
-├── scripts/                      # Setup scripts (excluded from build)
-│   ├── setup-elasticsearch.ts    # Create ES indices (8 indices)
-│   ├── create-sample-policies.ts # Seed payer policies
-│   ├── load-fhir-data.ts         # Load Synthea FHIR bundles
-│   ├── index-fhir-to-elasticsearch.ts  # Index FHIR → ES
-│   └── health-check.ts           # Verify service connections
-│
-├── docs/                         # Project documentation
-├── docker-compose.yml            # FHIR server + PostgreSQL
-├── next.config.ts                # Security headers, React Compiler
-├── .env.example                  # Environment variable template
-└── .env                          # Environment variables
+# Reset everything
+docker compose down -v         # Deletes all data
+docker compose up -d
 ```
 
 ---
@@ -234,9 +177,78 @@ health-sync-app/
 | `npm run lint` | Run ESLint |
 | `npm run setup:es` | Create Elasticsearch indices (requires ES credentials) |
 | `npm run setup:policies` | Seed sample payer policies into Elasticsearch |
-| `npm run health-check` | Check connectivity to Elasticsearch and FHIR server |
-| `npm run load:fhir-data -- <path>` | Load Synthea FHIR bundles into the FHIR server |
+| `npm run health-check` | Check connectivity to all services |
+| `npm run load:fhir-data` | Load FHIR bundles into the FHIR server |
 | `npm run index:fhir` | Index FHIR server data into Elasticsearch |
+
+---
+
+## Project Structure
+
+```
+health-sync-app/
+├── app/                          # Next.js App Router
+│   ├── page.tsx                  # Dashboard (Server Component)
+│   ├── layout.tsx                # Root layout with sidebar
+│   ├── new/page.tsx              # New PA submission form
+│   ├── analytics/page.tsx        # Analytics dashboard (Recharts)
+│   ├── audit/page.tsx            # HIPAA audit log viewer
+│   ├── agents/page.tsx           # Agent monitor
+│   ├── pa/[id]/page.tsx          # PA detail view
+│   ├── error.tsx                 # Error boundary
+│   ├── global-error.tsx          # Global error boundary
+│   ├── not-found.tsx             # 404 page
+│   ├── loading.tsx               # Loading state
+│   └── api/
+│       ├── pa-requests/          # GET, POST PA requests
+│       ├── pa-requests/[id]/     # GET, PATCH individual PA
+│       ├── pa-updates/[id]/      # SSE real-time updates
+│       ├── agents/execute/       # POST trigger agent processing
+│       ├── analytics/            # GET PA analytics (ES|QL powered)
+│       └── health/               # Health check endpoint
+│
+├── components/
+│   ├── dashboard/                # PADashboard, PARequestCard, MetricsSummary,
+│   │                               ImpactHeroBanner, QuickDemoScenarios
+│   ├── pa-details/               # PADetailView, PatientInfo, ClinicalDataPanel,
+│   │                               PolicyAnalysisPanel, PAPacketPanel, AgentTimeline
+│   ├── analytics/                # AnalyticsDashboard (Recharts charts)
+│   ├── agents/                   # AgentMonitor
+│   ├── audit/                    # AuditLogViewer (HIPAA audit trail)
+│   ├── forms/                    # NewPAForm
+│   └── ui/                       # Sidebar, StatusBadge, ConfidenceRing
+│
+├── lib/
+│   ├── agents/                   # AI agent implementations
+│   │   ├── BaseAgent.ts          # Abstract base with LLM + graceful fallback
+│   │   ├── CoordinatorAgent.ts   # Workflow orchestrator + audit logging
+│   │   ├── ClinicalDataGatherer.ts  # ES|QL patient profile queries
+│   │   ├── PolicyAnalyzer.ts     # ES|QL policy stats + hybrid search
+│   │   ├── DocumentationAssembler.ts
+│   │   └── ComplianceValidator.ts
+│   ├── services/
+│   │   ├── elasticsearch.ts      # ES client + ES|QL helper + audit logging
+│   │   ├── fhir.ts               # FHIR server client
+│   │   └── llm.ts                # Anthropic Claude wrapper
+│   ├── types/                    # TypeScript types (pa.ts, fhir.ts, agent.ts)
+│   ├── constants.ts              # All config (indices, statuses, payers, etc.)
+│   └── utils/cn.ts               # Tailwind class merge utility
+│
+├── actions/
+│   └── pa-actions.ts             # Server Actions: create, approve, deny, process PA
+│
+├── mock/                         # Demo mode data and simulation
+│   ├── data/                     # Sample PA requests, scenarios, analytics
+│   ├── agents/                   # Demo agent runner (simulated pipeline)
+│   ├── policies/                 # Sample payer policies
+│   └── store/                    # In-memory demo store
+│
+├── hooks/                        # React hooks (usePARequests, useRealTimeUpdates)
+├── scripts/                      # Setup and data loading scripts
+├── docker-compose.yml            # FHIR server + PostgreSQL
+├── .env.example                  # Environment variable template
+└── .env                          # Your environment variables (gitignored)
+```
 
 ---
 
@@ -251,32 +263,28 @@ health-sync-app/
 | `POST` | `/api/agents/execute` | Trigger agent processing for a PA |
 | `GET` | `/api/pa-updates/:id` | SSE stream for real-time PA status updates |
 | `GET` | `/api/analytics` | PA workflow analytics (ES|QL powered) |
-| `GET` | `/api/health` | Health check |
+| `GET` | `/api/health` | Health check (ES, Anthropic, FHIR status) |
 
-All mutation endpoints use **Zod validation**. Status values are validated against: `submitted`, `processing`, `ready_for_review`, `hitl_required`, `approved`, `denied`, `failed`.
+All mutation endpoints use **Zod validation**. Status values: `submitted`, `processing`, `ready_for_review`, `hitl_required`, `approved`, `denied`, `failed`.
 
 ---
 
 ## Key Features
 
-- **Multi-Agent Pipeline** - 5 specialized agents process PA requests end-to-end
-- **ES|QL Integration** - Agents use ES|QL for cross-index patient profiling and policy analytics
-- **Analytics Dashboard** - Recharts-powered visualizations: status distribution, payer breakdown, processing timeline, agent performance
-- **Audit Log Viewer** - HIPAA-compliant audit trail UI with PHI access filtering, ES|QL queries per event, and expandable detail rows
-- **Audit Logging** - Every agent action and PHI access logged to Elasticsearch with timestamps, duration, and compliance metadata
-- **Demo Mode** - Works fully without any external services configured
-- **Real-Time Updates** - SSE streaming + SWR polling for live status changes
-- **HITL Workflow** - Approve/deny buttons with denial reason input for human review
-- **PA Packet Generation** - Medical necessity narrative, supporting evidence, policy compliance
-- **CMS Compliance** - Timeline validation (72h expedited / 7-day standard deadlines)
-- **Clinical Data Viewer** - Tabbed view of conditions, medications, procedures, observations
-- **Policy Analysis** - Coverage probability scoring, criteria matching, gap identification
-- **ES|QL Query Inspector** - Expandable panels showing the actual ES|QL queries each agent executes
-- **Agent Timeline** - Visual step-by-step execution tracking with timestamps
-- **Responsive Design** - Mobile drawer sidebar, adaptive layouts for phone/tablet/desktop
-- **Security Headers** - HSTS, X-Frame-Options, CSP, Referrer-Policy via `next.config.ts`
-- **Input Validation** - Zod schemas on all API routes, `crypto.randomUUID()` for IDs
-- **Error Boundaries** - Route-level and global error handling with retry
+- **Multi-Agent Pipeline** — 5 specialized agents process PA requests end-to-end
+- **ES|QL Integration** — Agents use ES|QL for cross-index patient profiling and policy analytics
+- **Graceful Degradation** — Works without Elasticsearch, Anthropic, or FHIR; each service falls back independently
+- **Analytics Dashboard** — Recharts visualizations: status distribution, payer breakdown, processing timeline, agent performance
+- **Audit Log Viewer** — HIPAA-compliant audit trail with PHI access filtering and ES|QL queries per event
+- **Demo Mode** — Full functionality without any external services
+- **Real-Time Updates** — SSE streaming + SWR polling for live status changes
+- **HITL Workflow** — Approve/deny buttons with denial reason input for human review
+- **Retry on Failure** — Failed PAs show a retry button to re-run the agent pipeline
+- **PA Packet Generation** — Medical necessity narrative, supporting evidence, policy compliance
+- **CMS Compliance** — Timeline validation (72h expedited / 7-day standard deadlines)
+- **Error Boundaries** — Route-level and global error handling with retry and navigation
+- **Responsive Design** — Mobile drawer sidebar, adaptive layouts
+- **Security Headers** — HSTS, X-Frame-Options, CSP, Referrer-Policy
 
 ---
 
@@ -298,30 +306,43 @@ All mutation endpoints use **Zod validation**. Status values are validated again
 
 ---
 
-## Elasticsearch Setup (Optional)
+## Troubleshooting
 
-If you want to use real Elasticsearch instead of demo mode:
-
-1. **Create a deployment** at [Elastic Cloud](https://cloud.elastic.co/) (14-day free trial)
-2. Copy your **Cloud ID** and create an **API Key**
-3. Add them to `.env.local`
-4. Run index setup:
-
+### App won't start
 ```bash
-npm run setup:es          # Creates 8 indices (patients, conditions, medications, etc.)
-npm run setup:policies    # Seeds sample payer policies
-npm run health-check      # Verify connection
+rm -rf .next node_modules
+npm install
+npm run dev
 ```
 
----
+### Elasticsearch connection fails
+```bash
+# Verify credentials
+npm run health-check
 
-## Documentation
+# Check your .env has correct ELASTICSEARCH_CLOUD_ID and ELASTICSEARCH_API_KEY
+# The app will fall back to demo mode if ES is unavailable
+```
 
-| Document | Description |
-|----------|-------------|
-| [Architecture](docs/ARCHITECTURE.md) | System design, agent workflow, data flow |
-| [Tech Stack](docs/TECH-STACK.md) | Full dependency list and infrastructure |
-| [Setup Guide](docs/SETUP-GUIDE.md) | Detailed setup, configuration, troubleshooting |
+### Agents fail with "index_not_found_exception"
+```bash
+# Create the required Elasticsearch indices
+npm run setup:es
+npm run setup:policies
+```
+
+### Agents fail with "credit balance too low"
+The Anthropic API key has no credits. Agents will automatically fall back to generated text — the pipeline still completes successfully. To use real AI, add credits at https://console.anthropic.com/settings/plans.
+
+### Docker / FHIR issues
+```bash
+docker compose down && docker compose up -d
+docker logs healthsync-fhir     # Check for errors
+# FHIR server takes ~2 minutes to initialize on first start
+```
+
+### "Rendered more hooks" error
+Hard refresh the page (Cmd+Shift+R / Ctrl+Shift+R) or restart the dev server.
 
 ---
 
@@ -334,7 +355,7 @@ npm i -g vercel
 vercel
 ```
 
-Set environment variables in the Vercel dashboard. The app will work in demo mode if no credentials are provided.
+Set environment variables in the Vercel dashboard. The app works in demo mode if no credentials are provided.
 
 ---
 

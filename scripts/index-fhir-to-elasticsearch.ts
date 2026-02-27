@@ -179,7 +179,7 @@ async function fetchAllFromFHIR(resourceType: string): Promise<Record<string, un
 
 async function main() {
   console.log('========================================');
-  console.log('  HealthSync AI - Index FHIR to ES');
+  console.log('  HealthSync APP - Index FHIR to ES');
   console.log('========================================\n');
 
   // Validate Elasticsearch config

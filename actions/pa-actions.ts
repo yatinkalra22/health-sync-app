@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { elasticsearch, indexPARequest, updatePARequest } from '@/lib/services/elasticsearch';
 import { addDemoPARequest, updateDemoPARequest, runDemoAgentPipeline } from '@/mock';
+import { CoordinatorAgent } from '@/lib/agents/CoordinatorAgent';
 import type { PARequest } from '@/lib/types/pa';
 
 export async function createPARequest(formData: FormData) {
@@ -68,15 +69,18 @@ export async function denyPARequest(paId: string, reason: string) {
   return { success: true };
 }
 
-export async function processPA(paId: string, paData: {
+/**
+ * Run the agent pipeline on a PA request.
+ * Shared by the server action (UI button) and API route.
+ */
+export async function executeAgentPipeline(paId: string, paData: {
   patient_id: string;
   procedure_code: string;
   diagnosis_codes: string[];
   urgency: PARequest['urgency'];
   payer: string;
-}) {
+}): Promise<{ success: boolean; status: string; execution_log: unknown[] }> {
   if (!elasticsearch) {
-    // Demo mode: run simulated agents
     updateDemoPARequest(paId, { status: 'processing' });
 
     const result = runDemoAgentPipeline({ pa_id: paId, ...paData });
@@ -90,8 +94,6 @@ export async function processPA(paId: string, paData: {
       execution_log: result.execution_log,
     });
 
-    revalidatePath('/');
-    revalidatePath(`/pa/${paId}`);
     return {
       success: true,
       status: result.final_status,
@@ -99,8 +101,64 @@ export async function processPA(paId: string, paData: {
     };
   }
 
-  // Live mode: use real agents (handled by agent-actions.ts)
+  // Live mode
+  try {
+    await updatePARequest(paId, {
+      status: 'processing',
+      updated_at: new Date().toISOString(),
+    });
+
+    const coordinator = new CoordinatorAgent(elasticsearch);
+    const result = await coordinator.execute({ pa_id: paId, ...paData });
+
+    await updatePARequest(paId, {
+      status: result.status as PARequest['status'],
+      clinical_data: result.clinical_data,
+      policy_analysis: result.policy_analysis,
+      pa_packet: result.pa_packet,
+      compliance_checks: result.compliance_checks,
+      execution_log: result.execution_log,
+      updated_at: new Date().toISOString(),
+    });
+
+    return {
+      success: true,
+      status: result.status,
+      execution_log: result.execution_log ?? [],
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[executeAgentPipeline] Failed for ${paId}:`, message);
+
+    // Mark as failed in ES so the UI can show retry
+    try {
+      await updatePARequest(paId, {
+        status: 'failed',
+        execution_log: [{ step: 'error', status: 'failed', error: message, timestamp: new Date().toISOString() }],
+        updated_at: new Date().toISOString(),
+      });
+    } catch { /* best effort */ }
+
+    return {
+      success: false,
+      status: 'failed',
+      execution_log: [{ step: 'error', status: 'failed', error: message, timestamp: new Date().toISOString() }],
+    };
+  }
+}
+
+/**
+ * Server action called by the "Run AI Agents" button.
+ */
+export async function processPA(paId: string, paData: {
+  patient_id: string;
+  procedure_code: string;
+  diagnosis_codes: string[];
+  urgency: PARequest['urgency'];
+  payer: string;
+}) {
+  const result = await executeAgentPipeline(paId, paData);
   revalidatePath('/');
   revalidatePath(`/pa/${paId}`);
-  return { success: true };
+  return result;
 }

@@ -73,11 +73,11 @@ export default function ImpactHeroBanner({ paRequests }: Props) {
           </div>
         </div>
 
-        {/* Right: HealthSync AI (After) */}
+        {/* Right: HealthSync APP (After) */}
         <div className="space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20">
             <Zap className="w-3.5 h-3.5 text-blue-500" />
-            <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">HealthSync AI</span>
+            <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">HealthSync APP</span>
           </div>
           <div>
             <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent tracking-tight">

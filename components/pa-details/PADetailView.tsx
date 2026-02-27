@@ -44,9 +44,20 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
         payer: pa.payer,
       });
 
+      // If the pipeline failed, show the error in the timeline and refresh
+      if (!result.success) {
+        if (result.execution_log && result.execution_log.length > 0) {
+          setStreamingLog(result.execution_log as ExecutionLogEntry[]);
+        } else {
+          router.refresh();
+          setActionLoading(null);
+        }
+        return;
+      }
+
       // If we got execution_log back, enter streaming animation mode
       if (result.execution_log && result.execution_log.length > 0) {
-        setStreamingLog(result.execution_log);
+        setStreamingLog(result.execution_log as ExecutionLogEntry[]);
         // actionLoading stays 'process' — animation will clear it via handleStreamingComplete
       } else {
         setProcessComplete(true);
@@ -56,6 +67,7 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
         setTimeout(() => setProcessComplete(false), 1500);
       }
     } catch {
+      router.refresh();
       setActionLoading(null);
     }
   }, [pa, router]);
@@ -154,7 +166,7 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
               </div>
             )}
 
-            {(pa.status === 'submitted') && (
+            {(pa.status === 'submitted' || pa.status === 'failed') && (
               <button
                 onClick={handleProcess}
                 disabled={actionLoading !== null}
@@ -172,7 +184,7 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
                 ) : (
                   <Zap className="w-4 h-4" />
                 )}
-                {actionLoading === 'process' ? 'Processing...' : processComplete ? 'Complete!' : 'Run AI Agents'}
+                {actionLoading === 'process' ? 'Processing...' : processComplete ? 'Complete!' : pa.status === 'failed' ? 'Retry Agents' : 'Run AI Agents'}
               </button>
             )}
 

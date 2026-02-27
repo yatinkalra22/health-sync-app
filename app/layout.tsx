@@ -20,12 +20,12 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "HealthSync AI - Prior Authorization Automation",
+  title: "HealthSync APP - Prior Authorization Automation",
   description: "Multi-agent AI system for healthcare prior authorization automation powered by Elasticsearch and Claude",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "HealthSync AI",
+    title: "HealthSync APP",
   },
 };
 
