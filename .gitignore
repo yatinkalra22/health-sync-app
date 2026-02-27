@@ -33,8 +33,8 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
-# Data
-data/
+# Data (top-level only — use /data/ to avoid matching nested dirs like mock/data/)
+/data/
 scripts/output/
 
 # Logs
