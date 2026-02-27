@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import {
   FileText,
   Loader2,
+  Activity,
   CheckCircle2,
   AlertTriangle,
   ThumbsUp,
@@ -31,11 +32,11 @@ export default function MetricsSummary({ paRequests }: MetricsSummaryProps) {
     {
       label: 'Processing',
       value: paRequests.filter(p => p.status === 'processing' || p.status === 'submitted').length,
-      icon: Loader2,
+      icon: paRequests.filter(p => p.status === 'processing' || p.status === 'submitted').length > 0 ? Loader2 : Activity,
       color: 'from-amber-500 to-orange-500',
       bgColor: 'bg-amber-50',
       textColor: 'text-amber-700',
-      animate: true,
+      animate: paRequests.filter(p => p.status === 'processing' || p.status === 'submitted').length > 0,
     },
     {
       label: 'Ready for Review',

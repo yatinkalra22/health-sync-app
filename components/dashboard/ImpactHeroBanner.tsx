@@ -1,30 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Zap, FileCheck, TrendingUp } from 'lucide-react';
 import type { PARequest } from '@/lib/types/pa';
-
-function useAnimatedNumber(target: number, duration = 1500, decimals = 1) {
-  const [value, setValue] = useState(0);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const start = performance.now();
-    const animate = (now: number) => {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(eased * target);
-      if (progress < 1) rafRef.current = requestAnimationFrame(animate);
-    };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [target, duration]);
-
-  return decimals === 0 ? Math.round(value) : Number(value.toFixed(decimals));
-}
 
 interface Props {
   paRequests: PARequest[];
@@ -33,13 +11,9 @@ interface Props {
 export default function ImpactHeroBanner({ paRequests }: Props) {
   const totalProcessed = paRequests.filter(pa => pa.execution_log && pa.execution_log.length > 0).length;
   const approved = paRequests.filter(pa => pa.status === 'approved' || pa.status === 'ready_for_review').length;
-  const approvalRate = totalProcessed > 0 ? Math.round((approved / totalProcessed) * 100) : 92;
-  const timeSavedHours = totalProcessed > 0 ? totalProcessed * 6.2 : 37.2;
-  const docsGenerated = totalProcessed > 0 ? totalProcessed * 3 : 18;
-
-  const animTimeSaved = useAnimatedNumber(timeSavedHours, 2000);
-  const animApproval = useAnimatedNumber(approvalRate, 2000, 0);
-  const animDocs = useAnimatedNumber(docsGenerated, 2000, 0);
+  const approvalRate = totalProcessed > 0 ? Math.round((approved / totalProcessed) * 100) : 0;
+  const timeSavedHours = Math.round(totalProcessed * 6.2 * 10) / 10;
+  const docsGenerated = totalProcessed * 3;
 
   return (
     <motion.div
@@ -92,17 +66,17 @@ export default function ImpactHeroBanner({ paRequests }: Props) {
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/10">
               <TrendingUp className="w-4 h-4 text-blue-500 mx-auto mb-1" />
-              <p className="text-lg font-bold text-slate-800">{animTimeSaved}h</p>
+              <p className="text-lg font-bold text-slate-800">{timeSavedHours}h</p>
               <p className="text-[10px] text-slate-400 font-medium">Time Saved</p>
             </div>
             <div className="text-center p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
               <FileCheck className="w-4 h-4 text-emerald-500 mx-auto mb-1" />
-              <p className="text-lg font-bold text-slate-800">{animApproval}%</p>
+              <p className="text-lg font-bold text-slate-800">{approvalRate}%</p>
               <p className="text-[10px] text-slate-400 font-medium">Approval Rate</p>
             </div>
             <div className="text-center p-2.5 rounded-xl bg-violet-500/5 border border-violet-500/10">
               <FileCheck className="w-4 h-4 text-violet-500 mx-auto mb-1" />
-              <p className="text-lg font-bold text-slate-800">{animDocs}</p>
+              <p className="text-lg font-bold text-slate-800">{docsGenerated}</p>
               <p className="text-[10px] text-slate-400 font-medium">Docs Generated</p>
             </div>
           </div>

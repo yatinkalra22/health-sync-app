@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       addDemoPARequest(paRequest);
 
       // Run demo agent pipeline
-      const result = runDemoAgentPipeline(paRequest);
+      const result = await runDemoAgentPipeline(paRequest);
       updateDemoPARequest(paId, {
         status: result.final_status as PARequest['status'],
         clinical_data: result.clinical_data,

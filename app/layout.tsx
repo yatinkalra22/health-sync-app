@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/ui/Sidebar";
+import { ProcessingProvider } from "@/lib/context/ProcessingContext";
+import ProcessingFloatingBar from "@/components/ui/ProcessingFloatingBar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,13 +41,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="flex min-h-screen">
-          <Sidebar />
-          {/* pt-14 on mobile for the mobile header bar, lg:pt-0 + lg:ml-64 for desktop sidebar */}
-          <main className="flex-1 pt-14 lg:pt-0 lg:ml-64 mesh-gradient min-h-screen">
-            {children}
-          </main>
-        </div>
+        <ProcessingProvider>
+          <div className="flex min-h-screen">
+            <Sidebar />
+            {/* pt-14 on mobile for the mobile header bar, lg:pt-0 + lg:ml-64 for desktop sidebar */}
+            <main className="flex-1 pt-14 lg:pt-0 lg:ml-64 mesh-gradient min-h-screen">
+              {children}
+            </main>
+          </div>
+          <ProcessingFloatingBar />
+        </ProcessingProvider>
       </body>
     </html>
   );

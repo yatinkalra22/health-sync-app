@@ -144,3 +144,14 @@ body {
   width: 2px;
   background: linear-gradient(to bottom, #e2e8f0, transparent);
 }
+
+/* Processing floating bar shimmer sweep */
+@keyframes progress-sweep {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+.progress-sweep {
+  background: linear-gradient(90deg, #3b82f6, #06b6d4, #3b82f6);
+  background-size: 200% 100%;
+  animation: progress-sweep 2s linear infinite;
+}

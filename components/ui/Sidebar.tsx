@@ -225,7 +225,7 @@ export default function Sidebar() {
           </span>
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-[10px] font-semibold text-blue-400">
             <Bot className="w-3 h-3" />
-            Gemini AI
+            Claude AI
           </span>
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-semibold text-cyan-400">
             <Zap className="w-3 h-3" />

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useCallback, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Zap, Clock, Building2, Stethoscope, FileText, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Zap, Clock, Building2, Stethoscope, FileText, Loader2, CheckCircle2, Bot, Cpu, Activity } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils/cn';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -16,16 +16,155 @@ import PAPacketPanel from './PAPacketPanel';
 import AgentTimeline from './AgentTimeline';
 import CompletionCelebration from './CompletionCelebration';
 import { approvePARequest, denyPARequest, processPA } from '@/actions/pa-actions';
+import { useProcessing } from '@/lib/context/ProcessingContext';
 import type { PARequest, ExecutionLogEntry } from '@/lib/types/pa';
+
+const AGENT_STEPS = [
+  { label: 'Clinical Data Gathering', icon: Activity, color: 'text-blue-400' },
+  { label: 'Policy Analysis', icon: FileText, color: 'text-violet-400' },
+  { label: 'PA Packet Generation', icon: Bot, color: 'text-cyan-400' },
+  { label: 'Compliance Validation', icon: CheckCircle2, color: 'text-emerald-400' },
+  { label: 'Finalizing Report', icon: Cpu, color: 'text-amber-400' },
+];
+
+function AgentProcessingOverlay({ paId, elapsed }: { paId: string; elapsed: number }) {
+  const stepIdx = Math.min(4, elapsed < 3 ? 0 : elapsed < 6 ? 1 : elapsed < 10 ? 2 : elapsed < 14 ? 3 : 4);
+  const progress = Math.min(95, (elapsed / 18) * 100);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 z-40 flex items-center justify-center p-4 lg:pl-64"
+      style={{ background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(6px)' }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-8 shadow-2xl"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/40">
+              <Bot className="w-6 h-6 text-white" />
+            </div>
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900 animate-pulse" />
+          </div>
+          <div>
+            <h3 className="text-white font-bold text-lg">AI Agents Running</h3>
+            <p className="text-slate-400 text-sm font-mono">{paId}</p>
+          </div>
+          <div className="ml-auto text-right">
+            <span className="text-2xl font-bold text-blue-400 tabular-nums">{elapsed}s</span>
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider">elapsed</p>
+          </div>
+        </div>
+
+        {/* Animated progress bar */}
+        <div className="mb-6">
+          <div className="flex justify-between text-xs text-slate-400 mb-2">
+            <span>Agent Pipeline</span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-violet-500"
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+            />
+          </div>
+        </div>
+
+        {/* Agent steps */}
+        <div className="space-y-3">
+          {AGENT_STEPS.map((step, i) => {
+            const StepIcon = step.icon;
+            const isDone = i < stepIdx;
+            const isActive = i === stepIdx;
+            return (
+              <motion.div
+                key={step.label}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: isDone || isActive ? 1 : 0.35, x: 0 }}
+                transition={{ delay: i * 0.08 }}
+                className="flex items-center gap-3"
+              >
+                <div className={cn(
+                  'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-500',
+                  isDone ? 'bg-emerald-500/20 border border-emerald-500/40' :
+                  isActive ? 'bg-blue-500/20 border border-blue-500/40' :
+                  'bg-slate-800 border border-slate-700'
+                )}>
+                  {isDone ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : isActive ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                    >
+                      <StepIcon className={cn('w-3.5 h-3.5', step.color)} />
+                    </motion.div>
+                  ) : (
+                    <StepIcon className="w-3.5 h-3.5 text-slate-600" />
+                  )}
+                </div>
+                <span className={cn(
+                  'text-sm font-medium transition-colors duration-300',
+                  isDone ? 'text-emerald-400' : isActive ? 'text-white' : 'text-slate-600'
+                )}>
+                  {step.label}
+                </span>
+                {isActive && (
+                  <div className="ml-auto flex gap-0.5">
+                    {[0, 1, 2].map(d => (
+                      <motion.div
+                        key={d}
+                        className="w-1 h-1 rounded-full bg-blue-400"
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ duration: 1, repeat: Infinity, delay: d * 0.2 }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <p className="text-center text-xs text-slate-500 mt-6">
+          You can navigate away — we&apos;ll track progress for you
+        </p>
+      </motion.div>
+    </motion.div>
+  );
+}
 
 export default function PADetailView({ pa }: { pa: PARequest }) {
   const router = useRouter();
+  const { startProcessing, finishProcessing, isProcessing, processingPAs } = useProcessing();
   const [actionLoading, setActionLoading] = useState<'approve' | 'deny' | 'process' | null>(null);
   const [processComplete, setProcessComplete] = useState(false);
   const [showDenyInput, setShowDenyInput] = useState(false);
   const [denyReason, setDenyReason] = useState('');
   const [streamingLog, setStreamingLog] = useState<ExecutionLogEntry[] | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
+
+  // When this view mounts and the PA is already in-flight (user navigated away and back),
+  // show the overlay automatically. When processing finishes, refresh.
+  const isInFlight = isProcessing(pa.pa_id);
+  const processingEntry = processingPAs.get(pa.pa_id);
+  const overlayElapsed = processingEntry?.elapsed ?? 0;
+
+  useEffect(() => {
+    if (!isInFlight) return;
+    // Poll for completion when overlay is showing
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isInFlight, router]);
 
   const handleStreamingComplete = useCallback(() => {
     setStreamingLog(null);
@@ -35,6 +174,7 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
 
   const handleProcess = useCallback(async () => {
     setActionLoading('process');
+    startProcessing(pa.pa_id);
     try {
       const result = await processPA(pa.pa_id, {
         patient_id: pa.patient_id,
@@ -44,33 +184,32 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
         payer: pa.payer,
       });
 
-      // If the pipeline failed, show the error in the timeline and refresh
+      finishProcessing(pa.pa_id);
+      setActionLoading(null);
+
       if (!result.success) {
         if (result.execution_log && result.execution_log.length > 0) {
           setStreamingLog(result.execution_log as ExecutionLogEntry[]);
         } else {
           router.refresh();
-          setActionLoading(null);
         }
         return;
       }
 
-      // If we got execution_log back, enter streaming animation mode
       if (result.execution_log && result.execution_log.length > 0) {
         setStreamingLog(result.execution_log as ExecutionLogEntry[]);
-        // actionLoading stays 'process' — animation will clear it via handleStreamingComplete
       } else {
         setProcessComplete(true);
         await new Promise(resolve => setTimeout(resolve, 800));
         router.refresh();
-        setActionLoading(null);
         setTimeout(() => setProcessComplete(false), 1500);
       }
     } catch {
+      finishProcessing(pa.pa_id);
       router.refresh();
       setActionLoading(null);
     }
-  }, [pa, router]);
+  }, [pa, router, startProcessing, finishProcessing]);
 
   const handleApprove = async () => {
     setActionLoading('approve');
@@ -339,6 +478,16 @@ export default function PADetailView({ pa }: { pa: PARequest }) {
           }}
         />
       )}
+
+      {/* Agent Processing Overlay — shown when user returns to an in-flight PA */}
+      <AnimatePresence>
+        {(isInFlight || actionLoading === 'process') && (
+          <AgentProcessingOverlay
+            paId={pa.pa_id}
+            elapsed={overlayElapsed}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

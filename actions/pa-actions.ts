@@ -83,7 +83,7 @@ export async function executeAgentPipeline(paId: string, paData: {
   if (!elasticsearch) {
     updateDemoPARequest(paId, { status: 'processing' });
 
-    const result = runDemoAgentPipeline({ pa_id: paId, ...paData });
+    const result = await runDemoAgentPipeline({ pa_id: paId, ...paData });
 
     updateDemoPARequest(paId, {
       status: result.final_status as PARequest['status'],
