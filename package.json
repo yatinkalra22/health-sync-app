@@ -11,7 +11,9 @@
     "setup:policies": "tsx scripts/create-sample-policies.ts",
     "health-check": "tsx scripts/health-check.ts",
     "load:fhir-data": "tsx scripts/load-fhir-data.ts",
-    "index:fhir": "tsx scripts/index-fhir-to-elasticsearch.ts"
+    "index:fhir": "tsx scripts/index-fhir-to-elasticsearch.ts",
+    "cleanup:pas": "tsx scripts/cleanup-pas.ts",
+    "fix:pa-index": "tsx scripts/fix-pa-index.ts"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^9.3.2",

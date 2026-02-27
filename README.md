@@ -128,17 +128,36 @@ cp .env.example .env
 
 ## Available Scripts
 
-| Command | Description |
+### Development
+
+| Command | When to use |
 |---------|-------------|
-| `npm run dev` | Start development server on port 3000 |
-| `npm run build` | Create production build |
-| `npm start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run setup:es` | Create Elasticsearch indices (requires ES credentials) |
-| `npm run setup:policies` | Seed sample payer policies into Elasticsearch |
-| `npm run health-check` | Check connectivity to all services |
-| `npm run load:fhir-data` | Load FHIR bundles into the FHIR server |
-| `npm run index:fhir` | Index FHIR server data into Elasticsearch |
+| `npm run dev` | Start dev server on port 3000 — use this every time you work locally |
+| `npm run build` | Before deploying — verifies the production build compiles cleanly |
+| `npm start` | Start the production build locally after `npm run build` |
+| `npm run lint` | Before committing — catch type and lint errors early |
+
+### Setup (run once, in this order)
+
+| Command | When to use |
+|---------|-------------|
+| `npm run health-check` | **First thing** — verify ES, Gemini, and FHIR are reachable before doing anything else |
+| `npm run setup:es` | After configuring ES credentials — creates all 8 Elasticsearch indices |
+| `npm run setup:policies` | After `setup:es` — seeds sample payer coverage policies into Elasticsearch |
+
+### FHIR Data Pipeline (optional — only if using real patient data)
+
+| Command | When to use |
+|---------|-------------|
+| `npm run load:fhir-data -- ./output/fhir` | After generating Synthea bundles — loads FHIR patient data into the HAPI FHIR server |
+| `npm run index:fhir` | After `load:fhir-data` — reads FHIR server and bulk-indexes patients, conditions, medications, procedures, and observations into ES |
+
+### Maintenance & Troubleshooting
+
+| Command | When to use |
+|---------|-------------|
+| `npm run cleanup:pas` | Reset demo state — deletes all PA requests from ES so you can start fresh (useful before recording a demo) |
+| `npm run fix:pa-index` | Fix mapping errors — if you see `strict_dynamic_mapping_exception` or field type conflicts, this drops and recreates the PA index with complex nested objects stored but not dynamically mapped |
 
 ---
 

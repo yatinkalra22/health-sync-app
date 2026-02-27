@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
 import {
@@ -10,7 +11,6 @@ import {
   Activity,
   Shield,
   Zap,
-  Heart,
   Menu,
   X,
   Database,
@@ -18,6 +18,7 @@ import {
   FlaskConical,
   Globe,
 } from 'lucide-react';
+import logo from '@/app/assets/images/logo.png';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -70,23 +71,28 @@ export default function Sidebar() {
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="p-6 border-b border-slate-700/50 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-shadow">
-            <Heart className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold tracking-tight">HealthSync</h1>
-            <p className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">AI Platform</p>
+      <div className="relative py-4 px-4 border-b border-slate-700/50 flex items-center justify-center">
+        <Link href="/" className="group flex items-center gap-2">
+          <Image
+            src={logo}
+            alt="HealthSync APP"
+            width={80}
+            height={80}
+            className="group-hover:opacity-85 transition-opacity drop-shadow-md shrink-0"
+            style={{ objectFit: 'contain' }}
+          />
+          <div className="flex flex-col justify-center">
+            <h1 className="text-lg font-bold tracking-tight leading-tight">HealthSync</h1>
+            <p className="text-[10px] text-slate-400 font-medium tracking-widest uppercase leading-tight mt-0.5">AI Platform</p>
           </div>
         </Link>
-        {/* Close button - mobile only */}
+        {/* Close button - mobile only, absolute top-right */}
         <button
           onClick={() => setIsOpen(false)}
-          className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="lg:hidden absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           aria-label="Close menu"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
       </div>
 
@@ -237,21 +243,24 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile header bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-slate-900 text-white flex items-center justify-between px-4 py-3 shadow-lg">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-sm text-white flex items-center justify-between px-4 shadow-lg border-b border-slate-700/50" style={{ height: '56px' }}>
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
+          className="p-2 rounded-lg hover:bg-slate-800 transition-colors shrink-0"
           aria-label="Open menu"
         >
           <Menu className="w-5 h-5" />
         </button>
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-            <Heart className="w-3.5 h-3.5 text-white" />
-          </div>
-          <span className="font-bold text-sm">HealthSync APP</span>
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+          <Image
+            src={logo}
+            alt="HealthSync APP"
+            width={120}
+            height={38}
+            style={{ objectFit: 'contain' }}
+          />
         </Link>
-        <div className="w-9" /> {/* spacer for centering */}
+        <div className="w-9 shrink-0" />
       </div>
 
       {/* Mobile overlay */}
