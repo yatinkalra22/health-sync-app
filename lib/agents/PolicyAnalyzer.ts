@@ -38,7 +38,15 @@ export class PolicyAnalyzer extends BaseAgent {
     const policyStats = await this.getPolicyStatsESQL(payer);
     this.log('ES|QL policy stats for payer:', policyStats);
 
-    const policies = await this.searchPolicies(procedure_code, payer, diagnosis_codes);
+    let policies = await this.searchPolicies(procedure_code, payer, diagnosis_codes);
+
+    // If no policies found, generate and index a realistic sample policy
+    if (policies.length === 0 && this.es) {
+      this.log('No policies found — generating sample policy for:', { procedure_code, payer });
+      const samplePolicy = await this.generateSamplePolicy(procedure_code, payer, diagnosis_codes);
+      await this.indexSamplePolicy(samplePolicy);
+      policies = [samplePolicy];
+    }
 
     if (policies.length === 0) {
       this.log('No policies found');
@@ -77,6 +85,73 @@ export class PolicyAnalyzer extends BaseAgent {
     } catch {
       this.log('ES|QL policy stats unavailable');
       return null;
+    }
+  }
+
+  /**
+   * Use Gemini AI to generate a realistic coverage policy when none exists in ES.
+   */
+  private async generateSamplePolicy(
+    procedureCode: string,
+    payer: string,
+    diagnosisCodes: string[]
+  ): Promise<Record<string, unknown>> {
+    const prompt = `Generate a realistic healthcare payer coverage policy for prior authorization.
+
+Payer: ${payer}
+Procedure code: CPT ${procedureCode}
+Diagnosis codes: ${diagnosisCodes.join(', ')}
+
+Return ONLY valid JSON (no markdown, no backticks):
+{
+  "policy_id": "${payer.toUpperCase().replace(/\s+/g, '_')}_${procedureCode}",
+  "payer": "${payer}",
+  "policy_name": "descriptive policy name",
+  "procedure_codes": ["${procedureCode}"],
+  "diagnosis_codes": ${JSON.stringify(diagnosisCodes)},
+  "coverage_criteria": ["criterion 1", "criterion 2", "criterion 3", "criterion 4"],
+  "documentation_requirements": ["doc requirement 1", "doc requirement 2", "doc requirement 3"],
+  "policy_text": "A detailed 2-3 sentence policy description explaining when this procedure is covered and what conditions must be met."
+}
+
+Make the coverage criteria specific and realistic for CPT ${procedureCode}. Include 4-5 criteria and 3-4 documentation requirements.`;
+
+    const response = await this.callLLM([{ role: 'user', content: prompt }],
+      'You are a healthcare policy expert. Return ONLY valid JSON, no markdown.', 1500);
+
+    try {
+      const cleaned = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      return JSON.parse(cleaned);
+    } catch {
+      this.log('Failed to parse Gemini policy response, using fallback');
+      return {
+        policy_id: `${payer.toUpperCase().replace(/\s+/g, '_')}_${procedureCode}`,
+        payer,
+        policy_name: `${payer} Coverage - CPT ${procedureCode}`,
+        procedure_codes: [procedureCode],
+        diagnosis_codes: diagnosisCodes,
+        coverage_criteria: ['Medical necessity documented', 'Failed conservative treatment for 6+ weeks', 'Clinical evaluation completed', 'Diagnostic imaging obtained'],
+        documentation_requirements: ['Clinical evaluation notes', 'Prior treatment records', 'Diagnostic imaging reports'],
+        policy_text: `Coverage for CPT ${procedureCode} requires documented medical necessity, failure of conservative treatment, and supporting diagnostic evidence.`,
+      };
+    }
+  }
+
+  /**
+   * Index a generated sample policy into Elasticsearch.
+   */
+  private async indexSamplePolicy(policy: Record<string, unknown>) {
+    if (!this.es) return;
+    try {
+      await this.es.index({
+        index: ES_INDICES.POLICIES,
+        id: policy.policy_id as string,
+        document: policy,
+        refresh: true,
+      });
+      this.log('Indexed sample policy:', policy.policy_id);
+    } catch (err) {
+      this.log('Failed to index sample policy:', err);
     }
   }
 

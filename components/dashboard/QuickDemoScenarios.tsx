@@ -6,7 +6,59 @@ import { motion } from 'framer-motion';
 import { Zap, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { createPARequest } from '@/actions/pa-actions';
 
-const scenarios = [
+// --- Randomization pools ---
+
+const CLINICIANS = [
+  'Dr. Sarah Chen', 'Dr. Michael Torres', 'Dr. Lisa Park', 'Dr. James Rodriguez',
+  'Dr. Emily Nguyen', 'Dr. David Patel', 'Dr. Maria Garcia', 'Dr. Robert Kim',
+  'Dr. Amanda Foster', 'Dr. William Chang', 'Dr. Rachel Adams', 'Dr. Carlos Mendez',
+];
+
+const PAYERS = [
+  'Blue Cross Blue Shield', 'Aetna', 'Medicare', 'UnitedHealthcare',
+  'Cigna', 'Humana', 'Kaiser Permanente',
+];
+
+const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+
+// Each scenario type has multiple variants for diagnosis codes and notes
+const EXPEDITED_VARIANTS = [
+  { diagnosis_codes: 'M17.11,M25.561', notes: 'Patient experiencing severe pain, limited mobility. Conservative treatment exhausted over 6 months.' },
+  { diagnosis_codes: 'M17.12,M25.562', notes: 'Bilateral knee osteoarthritis with bone-on-bone contact. Failed PT and cortisone injections.' },
+  { diagnosis_codes: 'M17.11,M79.3', notes: 'Progressive joint deterioration. Patient unable to perform daily activities. Wheelchair-dependent.' },
+  { diagnosis_codes: 'M17.0,M25.561', notes: 'Severe cartilage loss confirmed by MRI. 8 months of conservative treatment with no improvement.' },
+  { diagnosis_codes: 'M17.11,G89.29', notes: 'Chronic knee pain refractory to all conservative measures. Surgical intervention urgently needed.' },
+];
+
+const HITL_VARIANTS = [
+  { diagnosis_codes: 'M23.211', notes: 'Arthroscopic meniscectomy. Prior imaging not yet available.' },
+  { diagnosis_codes: 'M23.221,M23.30', notes: 'Suspected meniscal tear with locking episodes. Awaiting MRI confirmation.' },
+  { diagnosis_codes: 'M23.211,M25.362', notes: 'Recurrent knee instability after meniscal injury. Incomplete documentation from referring physician.' },
+  { diagnosis_codes: 'M23.201', notes: 'Knee arthroscopy evaluation needed. Physical therapy notes pending from external provider.' },
+  { diagnosis_codes: 'M23.211,M79.669', notes: 'Persistent mechanical symptoms in right knee. Conservative treatment records from prior clinic not yet received.' },
+];
+
+const QUICK_VARIANTS = [
+  { diagnosis_codes: 'K21.0,K44.9', notes: 'Upper GI endoscopy with biopsy. All pre-op labs and imaging available.' },
+  { diagnosis_codes: 'K21.0,K22.70', notes: 'GERD refractory to 12 weeks of PPI therapy. Complete symptom documentation attached.' },
+  { diagnosis_codes: 'K21.0,R13.10', notes: 'Progressive dysphagia with documented weight loss. Barium swallow completed.' },
+  { diagnosis_codes: 'K44.9,K21.0', notes: 'Symptomatic hiatal hernia with GERD. Failed maximal medical therapy. All records available.' },
+  { diagnosis_codes: 'K21.0,K22.10', notes: 'Suspected Barrett esophagus screening. Complete medication history and prior imaging on file.' },
+];
+
+interface ScenarioConfig {
+  id: string;
+  title: string;
+  description: string;
+  icon: typeof Zap;
+  color: string;
+  bgColor: string;
+  procedure_code: string;
+  urgency: string;
+  variants: Array<{ diagnosis_codes: string; notes: string }>;
+}
+
+const scenarios: ScenarioConfig[] = [
   {
     id: 'expedited',
     title: 'Expedited Knee Surgery',
@@ -14,15 +66,9 @@ const scenarios = [
     icon: Zap,
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/5 border-amber-500/15 hover:border-amber-500/30',
-    formData: {
-      patient_id: 'patient-demo-001',
-      procedure_code: '27447',
-      diagnosis_codes: 'M17.11,M25.561',
-      urgency: 'expedited',
-      payer: 'Blue Cross Blue Shield',
-      clinician_id: 'Dr. Sarah Chen',
-      notes: 'Patient experiencing severe pain, limited mobility. Conservative treatment exhausted over 6 months.',
-    },
+    procedure_code: '27447',
+    urgency: 'expedited',
+    variants: EXPEDITED_VARIANTS,
   },
   {
     id: 'hitl',
@@ -31,15 +77,9 @@ const scenarios = [
     icon: AlertTriangle,
     color: 'text-rose-500',
     bgColor: 'bg-rose-500/5 border-rose-500/15 hover:border-rose-500/30',
-    formData: {
-      patient_id: 'patient-demo-002',
-      procedure_code: '29881',
-      diagnosis_codes: 'M23.211',
-      urgency: 'standard',
-      payer: 'Aetna',
-      clinician_id: 'Dr. Michael Torres',
-      notes: 'Arthroscopic meniscectomy. Prior imaging not yet available.',
-    },
+    procedure_code: '29881',
+    urgency: 'standard',
+    variants: HITL_VARIANTS,
   },
   {
     id: 'quick',
@@ -48,27 +88,38 @@ const scenarios = [
     icon: CheckCircle,
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500/5 border-emerald-500/15 hover:border-emerald-500/30',
-    formData: {
-      patient_id: 'patient-demo-003',
-      procedure_code: '43239',
-      diagnosis_codes: 'K21.0,K44.9',
-      urgency: 'standard',
-      payer: 'Medicare',
-      clinician_id: 'Dr. Lisa Park',
-      notes: 'Upper GI endoscopy with biopsy. All pre-op labs and imaging available.',
-    },
+    procedure_code: '43239',
+    urgency: 'standard',
+    variants: QUICK_VARIANTS,
   },
 ];
+
+/** Build a randomized form data object for a scenario */
+function buildRandomFormData(scenario: ScenarioConfig): Record<string, string> {
+  const variant = pick(scenario.variants);
+  const patientNum = Math.floor(Math.random() * 90000) + 10000;
+
+  return {
+    patient_id: `patient-${patientNum}`,
+    procedure_code: scenario.procedure_code,
+    diagnosis_codes: variant.diagnosis_codes,
+    urgency: scenario.urgency,
+    payer: pick(PAYERS),
+    clinician_id: pick(CLINICIANS),
+    notes: variant.notes,
+  };
+}
 
 export default function QuickDemoScenarios() {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  const handleScenario = async (scenario: typeof scenarios[0]) => {
+  const handleScenario = async (scenario: ScenarioConfig) => {
     setLoadingId(scenario.id);
     try {
+      const formData = buildRandomFormData(scenario);
       const fd = new FormData();
-      Object.entries(scenario.formData).forEach(([key, value]) => {
+      Object.entries(formData).forEach(([key, value]) => {
         fd.append(key, value);
       });
       const paId = await createPARequest(fd);
